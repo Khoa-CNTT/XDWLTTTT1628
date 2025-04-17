@@ -1,0 +1,58 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Đảm bảo không có style nào áp dụng max-width hoặc margin cho #app */
+#app {
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+// Global styles
+body {
+  font-family: "Roboto", sans-serif;
+  color: #1c2526;
+  background-color: #f8f9fa;
+}
+
+.container {
+  max-width: 1200px;
+}
+
+.btn-primary {
+  background-color: #1877f2;
+  border-color: #1877f2;
+  font-weight: 600;
+}
+
+.btn-primary:hover {
+  background-color: #165eab;
+  border-color: #165eab;
+}
+
+.btn-outline-primary {
+  color: #1877f2;
+  border-color: #1877f2;
+}
+
+.btn-outline-primary:hover {
+  background-color: #1877f2;
+  color: #fff;
+}
