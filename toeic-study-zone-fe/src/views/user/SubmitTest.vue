@@ -26,7 +26,7 @@
             </button>
           </div>
 
-          <!-- Bảng tổng kết số liệu -->
+          <!-- Bảng tổng kết -->
           <div class="result-summary row mb-4">
             <div class="col-12">
               <div class="summary-grid">
@@ -58,7 +58,6 @@
                   <p class="stat-label">Trả lời sai</p>
                   <h3 class="stat-value text-danger">57</h3>
                 </div>
-                <!-- Hàng dưới: Bỏ qua, Điểm, Thời gian hoàn thành -->
                 <div class="summary-card">
                   <div class="stat-icon skip-icon">
                     <i class="fas fa-forward"></i>
@@ -103,7 +102,6 @@
                   </div>
                 </div>
               </div>
-
               <div class="col-md-6">
                 <div class="score-card">
                   <h4>Reading</h4>
@@ -139,6 +137,7 @@
                   type="text"
                   class="filter-input me-2"
                   placeholder="Nhập từ khóa để lọc..."
+                  v-model="searchQuery"
                 />
               </div>
             </div>
@@ -151,88 +150,46 @@
             </div>
 
             <!-- Đáp án chi tiết -->
-            <div class="part-answers">
-              <h5>Part 1</h5>
-
+            <div class="part-answers" v-for="part in parts" :key="part.id">
+              <h5>Part {{ part.id }}</h5>
               <div class="answer-grid row">
-                <div class="col-2 answer-item">
-                  <div class="answer-number">1</div>
+                <div
+                  class="col-2 answer-item"
+                  v-for="answer in filteredAnswers(part.id).slice(
+                    0,
+                    showMore[part.id] ? undefined : 6
+                  )"
+                  :key="answer.questionNumber"
+                >
+                  <div class="answer-number">{{ answer.questionNumber }}</div>
                   <div class="answer-options">
-                    <span class="option selected">B</span>
-                    <span class="option correct">B</span>
-                    <span class="answer-mark">[34 sec]</span>
-                  </div>
-                </div>
-
-                <div class="col-2 answer-item">
-                  <div class="answer-number">2</div>
-                  <div class="answer-options">
-                    <span class="option selected">C</span>
-                    <span class="option correct">C</span>
-                    <span class="answer-mark">[30 sec]</span>
-                  </div>
-                </div>
-
-                <div class="col-2 answer-item">
-                  <div class="answer-number">3</div>
-                  <div class="answer-options">
-                    <span class="option selected">D</span>
-                    <span class="option correct">D</span>
-                    <span class="answer-mark">[29 sec]</span>
-                  </div>
-                </div>
-
-                <div class="col-2 answer-item">
-                  <div class="answer-number">4</div>
-                  <div class="answer-options">
-                    <span class="option selected">D</span>
-                    <span class="option correct">D</span>
-                    <span class="answer-mark">[34 sec]</span>
-                  </div>
-                </div>
-
-                <div class="col-2 answer-item">
-                  <div class="answer-number">5</div>
-                  <div class="answer-options">
-                    <span class="option selected">D</span>
-                    <span class="option correct">D</span>
-                    <span class="answer-mark">[29 sec]</span>
-                  </div>
-                </div>
-
-                <div class="col-2 answer-item">
-                  <div class="answer-number">6</div>
-                  <div class="answer-options">
-                    <span class="option selected">B</span>
-                    <span class="option correct">B</span>
-                    <span class="answer-mark">[30 sec]</span>
+                    <span class="option correct"
+                      >{{ answer.correctAnswer }}:</span
+                    >
+                    <span class="option selected">{{
+                      answer.selectedAnswer
+                    }}</span>
+                    <span
+                      class="answer-status"
+                      :class="answer.isCorrect ? 'correct' : 'wrong'"
+                      >{{ answer.isCorrect ? "✅" : "❌" }}</span
+                    >
+                    <a
+                      href="#"
+                      class="answer-details"
+                      @click.prevent="openResultSummary(answer)"
+                      >[Chi tiết]</a
+                    >
                   </div>
                 </div>
               </div>
-            </div>
-
-            <div class="part-answers">
-              <h5>Part 2</h5>
-
-              <div class="answer-grid row">
-                <div class="col-2 answer-item">
-                  <div class="answer-number">7</div>
-                  <div class="answer-options">
-                    <span class="option selected">B</span>
-                    <span class="option correct">B</span>
-                    <span class="answer-mark">[34 sec]</span>
-                  </div>
-                </div>
-
-                <div class="col-2 answer-item">
-                  <div class="answer-number">8</div>
-                  <div class="answer-options">
-                    <span class="option selected">C</span>
-                    <span class="option correct">C</span>
-                    <span class="answer-mark">[34 sec]</span>
-                  </div>
-                </div>
-              </div>
+              <button
+                v-if="filteredAnswers(part.id).length > 6"
+                class="btn btn-sm btn-outline-primary mt-2"
+                @click="toggleShowMore(part.id)"
+              >
+                {{ showMore[part.id] ? "Thu gọn" : "Xem thêm" }}
+              </button>
             </div>
           </div>
         </div>
@@ -241,7 +198,6 @@
       <!-- Right Column: Sidebar -->
       <div class="col-lg-4 right-column">
         <div class="sidebar">
-          <!-- Thông tin người dùng -->
           <div class="user-info">
             <div class="avatar"></div>
             <div class="user-details">
@@ -254,22 +210,16 @@
               </button>
             </div>
           </div>
-
-          <!-- Banner quảng cáo -->
           <div class="promo-banner">
             <h3>Kiểm tra trình độ miễn phí</h3>
             <p>Nhanh chóng - Chính xác - Hiệu quả</p>
             <button class="start-button">START</button>
           </div>
-
-          <!-- Nhóm học tập -->
           <div class="study-group">
             <h4>Trao đổi, học tập, Flashcards</h4>
             <p>StudyZone Extension</p>
             <button class="extension-button">Cài đặt ngay</button>
           </div>
-
-          <!-- Cộng đồng -->
           <div class="community">
             <h4>Cộng đồng luyện thi TOEIC</h4>
             <p>Tham gia nhóm Facebook StudyZone</p>
@@ -278,14 +228,28 @@
         </div>
       </div>
     </div>
+
+    <!-- Pop-up ResultSummary -->
+    <div v-if="showModal" class="modal-overlay">
+      <div class="modal-content">
+        <ResultSummary
+          :question="selectedQuestion"
+          @close="showModal = false"
+        />
+      </div>
+    </div>
   </main>
 </template>
 
 <script>
 import { ref } from "vue";
+import ResultSummary from "@/components/exams/ResultSummary.vue";
 
 export default {
   name: "SubmitTest",
+  components: {
+    ResultSummary,
+  },
   setup() {
     // Dữ liệu mẫu
     const testResult = ref({
@@ -308,8 +272,482 @@ export default {
       },
     });
 
+    // Dữ liệu mẫu đáp án (mô phỏng từ database)
+    const answers = ref([
+      // Part 1 (6 câu)
+      {
+        part: 1,
+        questionNumber: 1,
+        correctAnswer: "C",
+        selectedAnswer: "C",
+        isCorrect: true,
+        image: "https://picsum.photos/500/300?random=1",
+        audio: "/assets/audio/part1_question1.mp3",
+        options: [
+          { value: "A", text: "Option A for photo 1" },
+          { value: "B", text: "Option B for photo 1" },
+          { value: "C", text: "Option C for photo 1" },
+          { value: "D", text: "Option D for photo 1" },
+        ],
+        explanation:
+          "The correct answer is C because the photo depicts a scene that matches the description in option C.",
+        transcript:
+          "Transcript for question 1: This describes the scene in the photo where two people are rowing a canoe on a lake.",
+        questionText: "What are the people doing in the photo?",
+      },
+      {
+        part: 1,
+        questionNumber: 2,
+        correctAnswer: "C",
+        selectedAnswer: "C",
+        isCorrect: true,
+        image: "https://picsum.photos/500/300?random=2",
+        audio: "/assets/audio/part1_question2.mp3",
+        options: [
+          { value: "A", text: "Option A for photo 2" },
+          { value: "B", text: "Option B for photo 2" },
+          { value: "C", text: "Option C for photo 2" },
+          { value: "D", text: "Option D for photo 2" },
+        ],
+        explanation:
+          "The correct answer is C because the photo depicts a scene that matches the description in option C.",
+        transcript:
+          "Transcript for question 2: This describes the scene in the photo for question 2.",
+        questionText: "What is happening in the photo?",
+      },
+      {
+        part: 1,
+        questionNumber: 3,
+        correctAnswer: "D",
+        selectedAnswer: "D",
+        isCorrect: true,
+        image: "https://picsum.photos/500/300?random=3",
+        audio: "/assets/audio/part1_question3.mp3",
+        options: [
+          { value: "A", text: "Option A for photo 3" },
+          { value: "B", text: "Option B for photo 3" },
+          { value: "C", text: "Option C for photo 3" },
+          { value: "D", text: "Option D for photo 3" },
+        ],
+        explanation:
+          "The correct answer is D because the photo depicts a scene that matches the description in option D.",
+        transcript:
+          "Transcript for question 3: This describes the scene in the photo for question 3.",
+        questionText: "What are the people doing in the photo?",
+      },
+      {
+        part: 1,
+        questionNumber: 4,
+        correctAnswer: "D",
+        selectedAnswer: "D",
+        isCorrect: true,
+        image: "https://picsum.photos/500/300?random=4",
+        audio: "/assets/audio/part1_question4.mp3",
+        options: [
+          { value: "A", text: "Workers are exiting from the back of a van." },
+          { value: "B", text: "Some trees have fallen across a road." },
+          { value: "C", text: "A man is watering some potted plants." },
+          { value: "D", text: "Some people are seated outdoors." },
+        ],
+        explanation:
+          "The correct answer is D because the photo depicts a scene that matches the description in option D.",
+        transcript:
+          "Transcript for question 4: This describes the scene in the photo where some people are seated outdoors.",
+        questionText: "What are the people doing in the photo?",
+      },
+      {
+        part: 1,
+        questionNumber: 5,
+        correctAnswer: "D",
+        selectedAnswer: "D",
+        isCorrect: true,
+        image: "https://picsum.photos/500/300?random=5",
+        audio: "/assets/audio/part1_question5.mp3",
+        options: [
+          { value: "A", text: "Option A for photo 5" },
+          { value: "B", text: "Option B for photo 5" },
+          { value: "C", text: "Option C for photo 5" },
+          { value: "D", text: "Option D for photo 5" },
+        ],
+        explanation:
+          "The correct answer is D because the photo depicts a scene that matches the description in option D.",
+        transcript:
+          "Transcript for question 5: This describes the scene in the photo for question 5.",
+        questionText: "What is happening in the photo?",
+      },
+      {
+        part: 1,
+        questionNumber: 6,
+        correctAnswer: "B",
+        selectedAnswer: "B",
+        isCorrect: true,
+        image: "https://picsum.photos/500/300?random=6",
+        audio: "/assets/audio/part1_question6.mp3",
+        options: [
+          { value: "A", text: "Option A for photo 6" },
+          { value: "B", text: "Option B for photo 6" },
+          { value: "C", text: "Option C for photo 6" },
+          { value: "D", text: "Option D for photo 6" },
+        ],
+        explanation:
+          "The correct answer is B because the photo depicts a scene that matches the description in option B.",
+        transcript:
+          "Transcript for question 6: This describes the scene in the photo for question 6.",
+        questionText: "What are the people doing in the photo?",
+      },
+      // Part 2 (25 câu, chỉ liệt kê vài câu mẫu)
+      {
+        part: 2,
+        questionNumber: 7,
+        correctAnswer: "B",
+        selectedAnswer: "B",
+        isCorrect: true,
+        audio: "/assets/audio/part2_question1.mp3",
+        options: [
+          { value: "A", text: "Response A for question 7" },
+          { value: "B", text: "Response B for question 7" },
+          { value: "C", text: "Response C for question 7" },
+          { value: "D", text: "Response D for question 7" },
+        ],
+        explanation:
+          "The correct answer is B because it matches the context of the question.",
+        transcript:
+          "Transcript for question 7: This is the audio transcript for the question and response in Part 2.",
+        questionText: "Where is the meeting taking place?",
+      },
+      {
+        part: 2,
+        questionNumber: 8,
+        correctAnswer: "C",
+        selectedAnswer: "B",
+        isCorrect: false,
+        audio: "/assets/audio/part2_question2.mp3",
+        options: [
+          { value: "A", text: "Response A for question 8" },
+          { value: "B", text: "Response B for question 8" },
+          { value: "C", text: "Response C for question 8" },
+          { value: "D", text: "Response D for question 8" },
+        ],
+        explanation:
+          "The correct answer is C because it matches the context of the question. The user selected B, which is incorrect.",
+        transcript:
+          "Transcript for question 8: This is the audio transcript for the question and response in Part 2.",
+        questionText: "What time does the event start?",
+      },
+      {
+        part: 2,
+        questionNumber: 9,
+        correctAnswer: "B",
+        selectedAnswer: "B",
+        isCorrect: true,
+        audio: "/assets/audio/part2_question3.mp3",
+        options: [
+          { value: "A", text: "Response A for question 9" },
+          { value: "B", text: "Response B for question 9" },
+          { value: "C", text: "Response C for question 9" },
+          { value: "D", text: "Response D for question 9" },
+        ],
+        explanation:
+          "The correct answer is B because it matches the context of the question.",
+        transcript:
+          "Transcript for question 9: This is the audio transcript for the question and response in Part 2.",
+        questionText: "Who is in charge of the project?",
+      },
+      {
+        part: 2,
+        questionNumber: 10,
+        correctAnswer: "C",
+        selectedAnswer: "C",
+        isCorrect: true,
+        audio: "/assets/audio/part2_question4.mp3",
+        options: [
+          { value: "A", text: "Response A for question 10" },
+          { value: "B", text: "Response B for question 10" },
+          { value: "C", text: "Response C for question 10" },
+          { value: "D", text: "Response D for question 10" },
+        ],
+        explanation:
+          "The correct answer is C because it matches the context of the question.",
+        transcript:
+          "Transcript for question 10: This is the audio transcript for the question and response in Part 2.",
+        questionText: "How will the team communicate during the event?",
+      },
+      // Part 3 (39 câu, chỉ liệt kê vài câu mẫu)
+      {
+        part: 3,
+        questionNumber: 32,
+        correctAnswer: "A",
+        selectedAnswer: "A",
+        isCorrect: true,
+        audio: "/assets/audio/part3_conversation1.mp3",
+        options: [
+          { value: "A", text: "To request a ticket change" },
+          { value: "B", text: "To make a dinner reservation" },
+          { value: "C", text: "To order merchandise" },
+          { value: "D", text: "To plan a vacation" },
+        ],
+        explanation:
+          "The correct answer is A because the conversation indicates the woman is calling to request a ticket change.",
+        transcript:
+          "Transcript for question 32: Woman: Hello, I’d like to change my ticket for the concert. Man: Sure, let me check the availability for you.",
+        questionText: "Why is the woman calling?",
+      },
+      {
+        part: 3,
+        questionNumber: 33,
+        correctAnswer: "B",
+        selectedAnswer: "B",
+        isCorrect: true,
+        audio: "/assets/audio/part3_conversation1.mp3",
+        options: [
+          { value: "A", text: "An event was canceled" },
+          { value: "B", text: "A line is very long" },
+          { value: "C", text: "A payment option is unavailable" },
+          { value: "D", text: "A computer program is not working" },
+        ],
+        explanation:
+          "The correct answer is B because the man apologizes for the long line.",
+        transcript:
+          "Transcript for question 33: Man: I’m sorry for the long line at the ticket counter. We’re doing our best to assist everyone.",
+        questionText: "Why does the man apologize?",
+      },
+      {
+        part: 3,
+        questionNumber: 34,
+        correctAnswer: "C",
+        selectedAnswer: "B",
+        isCorrect: false,
+        audio: "/assets/audio/part3_conversation1.mp3",
+        options: [
+          { value: "A", text: "A meal voucher" },
+          { value: "B", text: "Some free souvenirs" },
+          { value: "C", text: "An increase in price" },
+          { value: "D", text: "A refund policy" },
+        ],
+        explanation:
+          "The correct answer is C because the man reminds the woman about an increase in price. The user selected B, which is incorrect.",
+        transcript:
+          "Transcript for question 34: Man: Just a reminder, there’s been a slight increase in price due to the event’s popularity.",
+        questionText: "What does the man remind the woman about?",
+      },
+      // Part 4 (30 câu, chỉ liệt kê vài câu mẫu)
+      {
+        part: 4,
+        questionNumber: 71,
+        correctAnswer: "D",
+        selectedAnswer: "D",
+        isCorrect: true,
+        audio: "/assets/audio/part4_talk1.mp3",
+        options: [
+          { value: "A", text: "A new company policy" },
+          { value: "B", text: "A product launch event" },
+          { value: "C", text: "A staff training session" },
+          { value: "D", text: "A company merger" },
+        ],
+        explanation:
+          "The correct answer is D because the talk discusses a company merger.",
+        transcript:
+          "Transcript for question 71: Welcome everyone. Today, I’m excited to announce that our company will be merging with a leading tech firm.",
+        questionText: "What is the main topic of the talk?",
+      },
+      {
+        part: 4,
+        questionNumber: 72,
+        correctAnswer: "A",
+        selectedAnswer: "B",
+        isCorrect: false,
+        audio: "/assets/audio/part4_talk1.mp3",
+        options: [
+          { value: "A", text: "New employees" },
+          { value: "B", text: "Senior managers" },
+          { value: "C", text: "Clients" },
+          { value: "D", text: "Shareholders" },
+        ],
+        explanation:
+          "The correct answer is A because the speaker is addressing new employees. The user selected B, which is incorrect.",
+        transcript:
+          "Transcript for question 72: I’d like to extend a warm welcome to all the new employees joining us today.",
+        questionText: "Who is the speaker addressing?",
+      },
+      // Part 5 (30 câu, chỉ liệt kê vài câu mẫu)
+      {
+        part: 5,
+        questionNumber: 101,
+        correctAnswer: "C",
+        selectedAnswer: "C",
+        isCorrect: true,
+        options: [
+          { value: "A", text: "encourage" },
+          { value: "B", text: "is encouraging" },
+          { value: "C", text: "encouraged" },
+          { value: "D", text: "was encouraged" },
+        ],
+        explanation:
+          "The correct answer is C because the past tense 'encouraged' fits the context of the sentence.",
+        transcript:
+          "Transcript for question 101: This is a placeholder transcript for Part 5, which does not typically have audio.",
+        questionText:
+          "The team was ______ to participate in the new initiative.",
+      },
+      {
+        part: 5,
+        questionNumber: 102,
+        correctAnswer: "B",
+        selectedAnswer: "A",
+        isCorrect: false,
+        options: [
+          { value: "A", text: "for" },
+          { value: "B", text: "about" },
+          { value: "C", text: "to" },
+          { value: "D", text: "at" },
+        ],
+        explanation:
+          "The correct answer is B because the preposition 'about' is appropriate for the context. The user selected A, which is incorrect.",
+        transcript:
+          "Transcript for question 102: This is a placeholder transcript for Part 5, which does not typically have audio.",
+        questionText: "She was concerned ______ the project deadline.",
+      },
+      // Part 6 (16 câu, chỉ liệt kê vài câu mẫu)
+      {
+        part: 6,
+        questionNumber: 131,
+        correctAnswer: "A",
+        selectedAnswer: "A",
+        isCorrect: true,
+        image: "https://picsum.photos/500/300?random=part6_group1",
+        options: [
+          { value: "A", text: "Option A for question 131" },
+          { value: "B", text: "Option B for question 131" },
+          { value: "C", text: "Option C for question 131" },
+          { value: "D", text: "Option D for question 131" },
+        ],
+        explanation:
+          "The correct answer is A because it fits the context of the passage.",
+        transcript:
+          "Transcript for question 131: This is a placeholder transcript for Part 6, which does not typically have audio.",
+        questionText:
+          "What is the purpose of the memo mentioned in the passage?",
+      },
+      {
+        part: 6,
+        questionNumber: 132,
+        correctAnswer: "D",
+        selectedAnswer: "D",
+        isCorrect: true,
+        image: "https://picsum.photos/500/300?random=part6_group1",
+        options: [
+          { value: "A", text: "Option A for question 132" },
+          { value: "B", text: "Option B for question 132" },
+          { value: "C", text: "Option C for question 132" },
+          { value: "D", text: "Option D for question 132" },
+        ],
+        explanation:
+          "The correct answer is D because it fits the context of the passage.",
+        transcript:
+          "Transcript for question 132: This is a placeholder transcript for Part 6, which does not typically have audio.",
+        questionText: "Who is the intended audience of the passage?",
+      },
+      // Part 7 (54 câu, chỉ liệt kê vài câu mẫu)
+      {
+        part: 7,
+        questionNumber: 147,
+        correctAnswer: "B",
+        selectedAnswer: "B",
+        isCorrect: true,
+        image: "https://picsum.photos/500/300?random=part7_single1",
+        options: [
+          { value: "A", text: "Option A for question 147" },
+          { value: "B", text: "Option B for question 147" },
+          { value: "C", text: "Option C for question 147" },
+          { value: "D", text: "Option D for question 147" },
+        ],
+        explanation:
+          "The correct answer is B because it matches the main purpose of the passage.",
+        transcript:
+          "Transcript for question 147: This is a placeholder transcript for Part 7, which does not typically have audio.",
+        questionText: "What is the main purpose of the passage?",
+      },
+      {
+        part: 7,
+        questionNumber: 148,
+        correctAnswer: "C",
+        selectedAnswer: "A",
+        isCorrect: false,
+        image: "https://picsum.photos/500/300?random=part7_single1",
+        options: [
+          { value: "A", text: "Option A for question 148" },
+          { value: "B", text: "Option B for question 148" },
+          { value: "C", text: "Option C for question 148" },
+          { value: "D", text: "Option D for question 148" },
+        ],
+        explanation:
+          "The correct answer is C because it matches the main purpose of the passage. The user selected A, which is incorrect.",
+        transcript:
+          "Transcript for question 148: This is a placeholder transcript for Part 7, which does not typically have audio.",
+        questionText: "What does the passage suggest about the company?",
+      },
+    ]);
+
+    // Danh sách Part
+    const parts = ref([
+      { id: 1, total: 6 },
+      { id: 2, total: 25 },
+      { id: 3, total: 39 },
+      { id: 4, total: 30 },
+      { id: 5, total: 30 },
+      { id: 6, total: 16 },
+      { id: 7, total: 54 },
+    ]);
+
+    // Trạng thái "Xem thêm" cho mỗi Part
+    const showMore = ref({
+      1: false,
+      2: false,
+      3: false,
+      4: false,
+      5: false,
+      6: false,
+      7: false,
+    });
+
+    // Tìm kiếm
+    const searchQuery = ref("");
+
+    // Pop-up state
+    const showModal = ref(false);
+    const selectedQuestion = ref(null);
+
+    // Lọc đáp án theo Part và từ khóa tìm kiếm
+    const filteredAnswers = (partId) => {
+      return answers.value.filter(
+        (answer) =>
+          answer.part === partId &&
+          (searchQuery.value === "" ||
+            answer.questionNumber.toString().includes(searchQuery.value))
+      );
+    };
+
+    // Toggle "Xem thêm"
+    const toggleShowMore = (partId) => {
+      showMore.value[partId] = !showMore.value[partId];
+    };
+
+    // Mở pop-up ResultSummary
+    const openResultSummary = (answer) => {
+      selectedQuestion.value = answer;
+      showModal.value = true;
+    };
+
     return {
       testResult,
+      parts,
+      filteredAnswers,
+      showMore,
+      toggleShowMore,
+      searchQuery,
+      showModal,
+      selectedQuestion,
+      openResultSummary,
     };
   },
 };
@@ -371,7 +809,7 @@ u {
 }
 
 .summary-card {
-  flex: 1 1 calc(20% - 15px); /* 5 cards in first row, adjusted for gap */
+  flex: 1 1 calc(20% - 15px);
   background: #f8f9fa;
   border: 1px solid #ddd;
   border-radius: 8px;
@@ -382,11 +820,11 @@ u {
 }
 
 .summary-card.accuracy-card {
-  flex: 1 1 calc(40% - 15px); /* Double the width for accuracy card */
+  flex: 1 1 calc(40% - 15px);
 }
 
 .summary-card:nth-child(n + 5) {
-  flex: 1 1 calc(33.33% - 15px); /* 3 cards in second row */
+  flex: 1 1 calc(33.33% - 15px);
 }
 
 .summary-card:hover {
@@ -471,15 +909,14 @@ u {
 
 .score-card h4 {
   font-size: 1.1rem;
-  color: #333;
+  color: #10359c;
   margin-bottom: 10px;
 }
 
 .score-value {
-  font-size: 1.25rem;
+  font-size: 1.4rem;
   font-weight: 600;
-  color: #1877f2;
-  margin-bottom: 10px;
+  margin-bottom: 7px;
 }
 
 .score-progress {
@@ -492,40 +929,8 @@ u {
 }
 
 .score-percent {
-  font-size: 0.8rem;
+  font-size: 1rem;
   color: #666;
-}
-
-.table {
-  font-size: 0.9rem;
-}
-
-.table th {
-  background-color: #f8f9fa;
-  font-weight: 600;
-}
-
-.rating {
-  display: flex;
-}
-
-.rating-circle {
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  margin-right: 3px;
-}
-
-.fa-exclamation-circle {
-  font-size: 15px;
-}
-
-.bg-success {
-  background-color: #4caf50;
-}
-
-.bg-light {
-  background-color: #e0e0e0;
 }
 
 .answer-controls {
@@ -551,7 +956,6 @@ u {
 .filter-input:focus {
   border-color: #1877f2;
   box-shadow: 0 0 5px rgba(24, 119, 242, 0.3);
-  color: #030303;
 }
 
 .alert-info {
@@ -567,21 +971,43 @@ u {
 
 .answer-grid {
   margin: 10px 0 20px;
+  gap: 20px;
 }
 
 .answer-item {
-  margin-bottom: 15px;
+  margin-left: 8px;
+}
+
+.part-answers {
+  margin-bottom: 20px;
+}
+
+.part-answers h5 {
+  font-weight: 600;
+  margin-bottom: 0.8rem;
+  margin-left: 0.3rem;
+  font-size: 1rem;
 }
 
 .answer-number {
   font-weight: 600;
   margin-bottom: 5px;
+  border-radius: 50%;
+  background-color: #e8f2ff;
+  color: #35509a;
+  width: 35px;
+  height: 35px;
+  line-height: 35px;
+  font-size: 15px;
+  text-align: center;
+  display: inline-block;
 }
 
 .answer-options {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  margin-left: 7px;
 }
 
 .option {
@@ -597,9 +1023,8 @@ u {
 }
 
 .selected {
-  background-color: #e3f2fd;
-  border-color: #1877f2;
-  color: #1877f2;
+  font-size: 1rem;
+  border: none;
 }
 
 .correct {
@@ -608,15 +1033,27 @@ u {
   color: #2e7d32;
 }
 
-.wrong {
-  background-color: #ffebee;
-  border-color: #ef5350;
-  color: #c62828;
+.answer-status {
+  font-size: 0.8rem;
+  margin-right: 5px;
 }
 
-.answer-mark {
-  font-size: 0.7rem;
-  color: #666;
+.answer-status.correct {
+  color: #4caf50;
+}
+
+.answer-status.wrong {
+  color: #ef5350;
+}
+
+.answer-details {
+  font-size: 0.8rem;
+  color: #1877f2;
+  text-decoration: none;
+}
+
+.answer-details:hover {
+  text-decoration: underline;
 }
 
 .sidebar {
@@ -768,22 +1205,34 @@ u {
   .summary-card.accuracy-card {
     flex: 1 1 calc(100% - 15px);
   }
-  .result-stat {
-    margin-bottom: 15px;
-  }
-
-  .score-details .col-md-6 {
-    margin-bottom: 15px;
-  }
-
   .answer-filter {
     flex-direction: column;
     align-items: flex-start;
     gap: 5px;
   }
-
   .filter-input {
     width: 100%;
   }
+}
+
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: transparent;
+  border: none;
+  max-width: 600px;
+  width: 90%;
 }
 </style>

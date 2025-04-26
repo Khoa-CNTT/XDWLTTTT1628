@@ -66,15 +66,18 @@ export default {
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
 .part-navigator h3 {
   font-size: 18px;
   font-weight: bold;
   margin-bottom: 20px;
   color: #333;
 }
+
 .part-section {
   margin-bottom: 15px;
 }
+
 .part-section h4 {
   font-size: 16px;
   font-weight: bold;
@@ -82,11 +85,13 @@ export default {
   margin-bottom: 10px;
   text-align: left;
 }
+
 .part-questions {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 4px;
 }
+
 .part-questions button {
   padding: 4px;
   border: 1px solid #080808;
@@ -98,11 +103,13 @@ export default {
   text-align: center;
   color: #000000;
 }
+
 .part-questions button.answered {
   background: #d3f9d8;
   border-color: #28a745;
   color: #000000;
 }
+
 .part-questions button.active {
   background: #007bff;
   border-color: #007bff;
