@@ -41,6 +41,7 @@ export default {
 .listening-player {
   margin-bottom: 20px;
 }
+
 .listening-player audio {
   width: 100%;
   max-width: 500px;

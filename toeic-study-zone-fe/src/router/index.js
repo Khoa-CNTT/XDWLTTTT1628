@@ -22,6 +22,9 @@ import Statistics from "@/views/admin/Statistics.vue";
 import ScheduleManager from "@/views/admin/ScheduleManager.vue";
 import Comments from "@/views/admin/CommentManager.vue";
 import Ads from "@/views/admin/AdsManager.vue";
+import TestBank from "@/views/admin/TestBank.vue";
+import TestManager from "@/views/admin/TestManager.vue";
+import RoleManager from "@/views/admin/RoleManager.vue";
 
 const routes = [
   {
@@ -135,6 +138,24 @@ const routes = [
     path: "/admin/ads",
     name: "Ads",
     component: Ads,
+    meta: { layout: "admin" },
+  },
+  {
+    path: "/admin/test-bank",
+    name: "TestBank",
+    component: TestBank,
+    meta: { layout: "admin" },
+  },
+  {
+    path: "/admin/test-manager",
+    name: "TestManager",
+    component: TestManager,
+    meta: { layout: "admin" },
+  },
+  {
+    path: "/admin/role-manager",
+    name: "RoleManager",
+    component: RoleManager,
     meta: { layout: "admin" },
   },
 ];

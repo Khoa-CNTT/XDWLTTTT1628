@@ -26,7 +26,7 @@
             to="/schedule-discover"
             class="btn rounded-pill px-4 py-1 fw-semibold"
             :class="
-              $route.path === '/schedule-discover'
+              $route.path === '/schedule/discover'
                 ? 'btn-primary'
                 : 'btn-outline-primary'
             "

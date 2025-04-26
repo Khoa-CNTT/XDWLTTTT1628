@@ -44,12 +44,12 @@
           >
         </li>
         <li>
-          <router-link to="/admin/questions"
+          <router-link to="/admin/test-bank"
             ><i class="fas fa-database"></i> Ngân hàng bài thi</router-link
           >
         </li>
         <li>
-          <router-link to="/admin/tests"
+          <router-link to="/admin/test-manager"
             ><i class="fas fa-file-alt"></i> Bài thi</router-link
           >
         </li>
@@ -79,15 +79,9 @@
         </router-link>
       </li>
       <li>
-        <router-link to="/admin/study-goals">
-          <i class="fas fa-bullseye"></i>
-          <span>Mục tiêu học</span>
-        </router-link>
-      </li>
-      <li>
-        <router-link to="/admin/tips">
-          <i class="fas fa-lightbulb"></i>
-          <span>Quản lý mẹo học tập</span>
+        <router-link to="/admin/role-manager">
+          <i class="fas fa-users-cog"></i>
+          <span>Phân quyền</span>
         </router-link>
       </li>
     </ul>
@@ -108,11 +102,11 @@ const toggleDropdown = () => {
   height: 100vh;
   background-color: #1f2d3d;
   color: #fff;
-  padding-top: 20px;
   position: fixed;
   display: flex;
   flex-direction: column;
   font-size: 14px;
+  padding: 4px;
 }
 
 .logo {

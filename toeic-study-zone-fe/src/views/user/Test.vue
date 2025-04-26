@@ -273,7 +273,7 @@ export default {
     const router = useRouter();
     const selectedParts = ref([]); // Mảng để lưu các phần được chọn
     const selectedTimeLimit = ref(""); // Thời gian giới hạn
-    const activeTab = ref("practice"); // Tab hiện tại: 'practice' hoặc 'full-test'
+    const activeTab = ref("practice"); // Tab hiện tại: practice hoặc full-test
 
     // Tạo danh sách tùy chọn thời gian: 0 phút, 5 phút, ..., 135 phút
     const timeOptions = ref([]);
@@ -530,6 +530,7 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 15px;
+  position: sticky;
 }
 
 .user-info {

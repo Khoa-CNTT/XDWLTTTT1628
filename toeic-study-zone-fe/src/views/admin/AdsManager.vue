@@ -4,6 +4,12 @@
       <i class="bi bi-megaphone-fill me-2"></i> Quản lý quảng cáo
     </h3>
 
+    <div class="text-end mb-3">
+      <button class="btn btn-primary" @click="showCreateModal = true">
+        <i class="bi bi-plus-circle me-1"></i> Tạo quảng cáo
+      </button>
+    </div>
+
     <div class="table-responsive">
       <table class="table table-bordered align-middle shadow-sm">
         <thead class="table-light">
@@ -25,26 +31,16 @@
             <td>{{ formatDate(ad.startDate) }}</td>
             <td>{{ formatDate(ad.endDate) }}</td>
             <td>
-              <span :class="statusClass(ad.status)">{{ ad.status }}</span>
+              <span
+                :class="ad.isActive ? 'badge bg-success' : 'badge bg-secondary'"
+              >
+                {{ ad.isActive ? "Đang hoạt động" : "Ngưng hoạt động" }}
+              </span>
             </td>
             <td>
               <div class="btn-group btn-group-sm">
                 <button class="btn btn-info text-white" @click="viewDetail(ad)">
                   Xem chi tiết
-                </button>
-                <button
-                  class="btn btn-success"
-                  @click="approveAd(ad)"
-                  v-if="ad.status === 'Chờ duyệt'"
-                >
-                  Duyệt
-                </button>
-                <button
-                  class="btn btn-warning text-white"
-                  @click="rejectAd(ad)"
-                  v-if="ad.status === 'Chờ duyệt'"
-                >
-                  Từ chối
                 </button>
                 <button class="btn btn-danger" @click="deleteAd(ad.id)">
                   Xóa
@@ -80,7 +76,10 @@
           <strong>Mô tả:</strong><br />{{ selectedAd.description }}
         </div>
         <div class="mb-2">
-          <strong>Liên kết đích:</strong><br />{{ selectedAd.linkUrl }}
+          <strong>Trạng thái:</strong>
+          <span :class="selectedAd.isActive ? 'text-success' : 'text-muted'">
+            {{ selectedAd.isActive ? "Đang hoạt động" : "Ngưng hoạt động" }}
+          </span>
         </div>
         <div class="text-end">
           <button class="btn btn-secondary mt-3" @click="selectedAd = null">
@@ -90,29 +89,59 @@
       </div>
     </div>
 
-    <!-- Modal nhập lý do từ chối -->
+    <!-- Modal tạo quảng cáo -->
     <div
-      v-if="rejectionTarget"
+      v-if="showCreateModal"
       class="modal-backdrop-custom"
-      @click.self="rejectionTarget = null"
+      @click.self="showCreateModal = false"
     >
       <div class="modal-content-custom p-4">
-        <h5 class="fw-bold mb-3">Lý do từ chối quảng cáo</h5>
-        <textarea
-          v-model="rejectionReason"
-          rows="4"
-          class="form-control mb-3"
-          placeholder="Nhập lý do từ chối..."
-        ></textarea>
-        <div class="text-end">
-          <button
-            class="btn btn-secondary me-2"
-            @click="rejectionTarget = null"
-          >
-            Hủy
-          </button>
-          <button class="btn btn-danger" @click="confirmRejection">Gửi</button>
-        </div>
+        <h5 class="fw-bold mb-3">Tạo quảng cáo mới</h5>
+        <form @submit.prevent="createAd">
+          <input
+            v-model="newAd.title"
+            class="form-control mb-2"
+            placeholder="Tiêu đề"
+            required
+          />
+          <input
+            v-model="newAd.imageUrl"
+            class="form-control mb-2"
+            placeholder="URL hình ảnh"
+            required
+          />
+          <textarea
+            v-model="newAd.description"
+            class="form-control mb-2"
+            placeholder="Mô tả"
+          ></textarea>
+          <input
+            v-model="newAd.linkUrl"
+            class="form-control mb-2"
+            placeholder="URL đích"
+          />
+          <input
+            v-model="newAd.startDate"
+            type="date"
+            class="form-control mb-2"
+            required
+          />
+          <input
+            v-model="newAd.endDate"
+            type="date"
+            class="form-control mb-3"
+            required
+          />
+          <div class="text-end">
+            <button
+              class="btn btn-secondary me-2"
+              @click="showCreateModal = false"
+            >
+              Hủy
+            </button>
+            <button type="submit" class="btn btn-primary">Lưu</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -121,67 +150,50 @@
 <script setup>
 import { ref } from "vue";
 
-const ads = ref([
-  {
-    id: 1,
-    title: "Khóa học TOEIC 50% ưu đãi",
-    imageUrl: "https://via.placeholder.com/100x60.png?text=Ad",
-    description: "Tham gia ngay khóa học TOEIC chất lượng với giá siêu ưu đãi!",
-    linkUrl: "https://toeic.example.com",
-    startDate: "2025-04-15",
-    endDate: "2025-05-15",
-    status: "Chờ duyệt",
-  },
-]);
-
+const ads = ref([]);
 const selectedAd = ref(null);
-const rejectionTarget = ref(null);
-const rejectionReason = ref("");
+const showCreateModal = ref(false);
+
+const newAd = ref({
+  title: "",
+  description: "",
+  imageUrl: "",
+  linkUrl: "",
+  position: "",
+  startDate: "",
+  endDate: "",
+  isActive: true,
+});
 
 const viewDetail = (ad) => {
   selectedAd.value = ad;
 };
 
-const approveAd = (ad) => {
-  if (confirm("Bạn có chắc chắn muốn duyệt quảng cáo này?")) {
-    ad.status = "Đã duyệt";
-    alert("Quảng cáo đã được duyệt thành công!");
-  }
-};
-
-const rejectAd = (ad) => {
-  rejectionTarget.value = ad;
-  rejectionReason.value = "";
-};
-
-const confirmRejection = () => {
-  if (rejectionReason.value.trim() === "") {
-    alert("Vui lòng nhập lý do từ chối!");
-    return;
-  }
-  rejectionTarget.value.status = "Bị từ chối";
-  alert("Quảng cáo đã bị từ chối!");
-  rejectionTarget.value = null;
+const createAd = () => {
+  ads.value.push({
+    id: Date.now(),
+    ...newAd.value,
+  });
+  showCreateModal.value = false;
+  newAd.value = {
+    title: "",
+    description: "",
+    imageUrl: "",
+    linkUrl: "",
+    position: "",
+    startDate: "",
+    endDate: "",
+    isActive: true,
+  };
 };
 
 const deleteAd = (id) => {
-  if (confirm("Bạn có chắc chắn muốn gỡ bỏ quảng cáo này?")) {
+  if (confirm("Bạn có chắc chắn muốn xóa quảng cáo này?")) {
     ads.value = ads.value.filter((ad) => ad.id !== id);
-    alert("Quảng cáo đã bị gỡ bỏ!");
   }
 };
 
-const formatDate = (dateStr) => {
-  const d = new Date(dateStr);
-  return d.toLocaleDateString("vi-VN");
-};
-
-const statusClass = (status) => {
-  if (status === "Chờ duyệt") return "badge bg-secondary";
-  if (status === "Đã duyệt") return "badge bg-success";
-  if (status === "Bị từ chối") return "badge bg-danger";
-  return "";
-};
+const formatDate = (str) => new Date(str).toLocaleDateString("vi-VN");
 </script>
 
 <style scoped>

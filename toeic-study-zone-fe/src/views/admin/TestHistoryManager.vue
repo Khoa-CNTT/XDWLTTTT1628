@@ -6,15 +6,16 @@
     </h4>
 
     <!-- Bộ lọc và tìm kiếm -->
-    <div class="row mb-4">
-      <div class="col-md-4">
-        <input
-          type="text"
-          v-model="search"
-          class="form-control"
-          placeholder="Tìm theo người dùng..."
-        />
-      </div>
+    <div class="mb-3 d-flex align-items-center">
+      <input
+        type="text"
+        class="form-control me-2"
+        v-model="searchKeyword"
+        placeholder="Tìm kiếm theo tên hoặc email"
+      />
+      <button class="btn btn-primary search-btn" @click="fetchUsers">
+        Tìm kiếm
+      </button>
     </div>
 
     <!-- Bảng dữ liệu người dùng -->
@@ -168,7 +169,8 @@
 <script setup>
 import { ref, computed } from "vue";
 
-const search = ref("");
+const searchInput = ref(""); // Input tìm kiếm
+const search = ref(""); // Giá trị tìm kiếm thực tế sau khi nhấn nút
 const showDetailModal = ref(false);
 const selectedUserId = ref(null);
 const selectedUserName = ref("");
@@ -233,6 +235,10 @@ const filteredUsers = computed(() => {
   );
 });
 
+function searchUsers() {
+  search.value = searchInput.value; // Cập nhật giá trị tìm kiếm khi nhấn nút
+}
+
 function viewUserDetails(userId, userName) {
   selectedUserId.value = userId;
   selectedUserName.value = userName;
@@ -246,14 +252,23 @@ function viewUserDetails(userId, userName) {
 .table td {
   vertical-align: middle;
 }
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
   z-index: 1050;
 }
+
 .modal-content {
   max-height: 90vh;
   overflow-y: auto;
+}
+
+.search-btn {
+  white-space: nowrap;
+  padding: 0.375rem 1rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
 }
 </style>

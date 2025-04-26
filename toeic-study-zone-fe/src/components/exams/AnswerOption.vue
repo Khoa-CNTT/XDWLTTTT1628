@@ -28,6 +28,7 @@ export default {
   position: relative;
   width: 100%;
 }
+
 .answer-option input[type="radio"] {
   appearance: none;
   -webkit-appearance: none;
@@ -40,10 +41,12 @@ export default {
   border-radius: 50%;
   background-color: #fff;
 }
+
 .answer-option input[type="radio"]:checked {
   background-color: #fff;
   border: 1px solid #666;
 }
+
 .answer-option input[type="radio"]:checked::after {
   content: "";
   position: absolute;
@@ -55,6 +58,7 @@ export default {
   background-color: #0075ff;
   border-radius: 50%;
 }
+
 .answer-option span {
   font-size: 16px;
   font-weight: normal; /* Không cần đậm giống Hình 1 */
