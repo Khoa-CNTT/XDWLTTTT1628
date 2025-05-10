@@ -42,18 +42,18 @@
                 <td>
                   <div class="btn-group-sm d-flex justify-content-center gap-2">
                     <button
-                      class="btn btn-outline-primary btn-sm px-2"
+                      class="btn btn-outline-primary btn-sm"
                       @click="editRole(role)"
+                      title="Sửa quyền"
                     >
-                      Sửa
-                      <i class="bi bi-pencil-fill"></i>
+                      <i class="bi bi-pencil-square"></i>
                     </button>
                     <button
-                      class="btn btn-outline-danger btn-sm px-2"
+                      class="btn btn-outline-danger btn-sm"
                       @click="deleteRole(role.id)"
+                      title="Xoá quyền"
                     >
-                      Xoá
-                      <i class="bi bi-trash-fill"></i>
+                      <i class="bi bi-trash3"></i>
                     </button>
                   </div>
                 </td>
@@ -255,12 +255,22 @@ function addFunction() {
   font-size: 14px;
   transition: all 0.2s ease-in-out;
 }
+.btn-outline-primary {
+  border-color: #0d6efd;
+  color: #0d6efd;
+}
 .btn-outline-primary:hover {
   background-color: #0d6efd;
   color: white;
+  border-color: #0d6efd;
+}
+.btn-outline-danger {
+  border-color: #dc3545;
+  color: #dc3545;
 }
 .btn-outline-danger:hover {
   background-color: #dc3545;
   color: white;
+  border-color: #dc3545;
 }
 </style>

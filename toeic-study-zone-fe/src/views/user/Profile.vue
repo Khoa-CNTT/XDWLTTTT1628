@@ -17,7 +17,6 @@
           alt="Avatar"
           class="rounded-circle avatar-img border border-white"
         />
-        <span class="position-absolute"><i class="bi bi-pencil-fill"></i></span>
       </div>
       <h4 class="fw-bold mt-2">{{ form.fullName }}</h4>
       <span class="badge bg-light text-dark fw-medium">Trang công khai</span>

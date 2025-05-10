@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import Home from "@/views/Home.vue";
 import authRoutes from "./auth";
+import examsRoutes from "./exams";
 
 // User
 import Dashboard from "@/views/user/Dashboard.vue";
@@ -11,7 +12,6 @@ import ScheduleForm from "@/views/user/Schedule/ScheduleForm.vue";
 import TestHistory from "@/views/user/TestHistory.vue";
 import Test from "@/views/user/Test.vue";
 import PlacementTest from "@/views/user/PlacementTest.vue";
-import examsRoutes from "./exams";
 import SubmitTest from "@/views/user/SubmitTest.vue";
 
 // Admin
