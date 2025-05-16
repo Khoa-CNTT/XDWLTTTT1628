@@ -2,6 +2,7 @@ package com.toeicstudyzone.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+
 import java.time.LocalDateTime;
 
 @Data
@@ -41,6 +42,13 @@ public class UserTestHistory {
     @Column(nullable = false)
     private Boolean completed;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "mode")
+    private Mode mode;
+
+    @Column(name = "part_number")
+    private Integer partNumber;
+
     @PrePersist
     protected void onCreate() {
         startTime = LocalDateTime.now();
@@ -50,5 +58,10 @@ public class UserTestHistory {
         if (completed == null) {
             completed = false;
         }
+    }
+
+    public enum Mode {
+        FULL_TEST,
+        PART_TEST
     }
 }

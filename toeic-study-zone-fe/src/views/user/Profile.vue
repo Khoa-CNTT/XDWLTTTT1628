@@ -13,12 +13,13 @@
     <div class="container text-center mt-n5">
       <div class="avatar-wrapper position-relative d-inline-block">
         <img
-          :src="form.avatarUrl"
+          :src="form.avatarUrl || defaultAvatar"
           alt="Avatar"
           class="rounded-circle avatar-img border border-white"
+          @error="handleImageError"
         />
       </div>
-      <h4 class="fw-bold mt-2">{{ form.fullName }}</h4>
+      <h4 class="fw-bold mt-2">{{ form.fullName || 'Chưa có tên' }}</h4>
       <span class="badge bg-light text-dark fw-medium">Trang công khai</span>
     </div>
 
@@ -44,12 +45,13 @@
             <!-- Bên trái -->
             <div class="flex-shrink-0 text-center w-25 border-end pe-4">
               <img
-                :src="form.avatarUrl"
+                :src="form.avatarUrl || defaultAvatar"
                 class="rounded-circle mb-3"
                 style="width: 100px; height: 100px"
+                @error="handleImageError"
               />
-              <h5 class="fw-bold mb-1">{{ form.fullName }}</h5>
-              <p class="text-muted mb-1">{{ form.email }}</p>
+              <h5 class="fw-bold mb-1">{{ form.fullName || 'Chưa có tên' }}</h5>
+              <p class="text-muted mb-1">{{ form.email || 'Chưa có email' }}</p>
               <small class="text-muted">{{ formatDate(form.dob) }}</small>
               <div class="mt-2">
                 <button
@@ -99,7 +101,12 @@
                       v-model="form.phone"
                       type="text"
                       class="form-control"
+                      :class="{ 'is-invalid': phoneError }"
+                      @input="validatePhoneNumber"
                     />
+                    <div v-if="phoneError" class="invalid-feedback">
+                      {{ phoneError }}
+                    </div>
                   </div>
                 </div>
                 <div class="mb-4 row">
@@ -113,7 +120,10 @@
                   </div>
                 </div>
                 <div class="text-end">
-                  <button type="submit" class="btn btn-primary px-4">
+                  <button
+                    type="submit"
+                    class="btn btn-primary px-4"
+                  >
                     Lưu
                   </button>
                 </div>
@@ -127,42 +137,146 @@
 </template>
 
 <script setup>
-import { ref, reactive } from "vue";
+import { ref, reactive, onMounted } from "vue";
+import userService from "@/services/userService";
 
 const activeTab = ref("profile");
 const fileInput = ref(null);
+const phoneError = ref("");
+const defaultAvatar = new URL("@/assets/images/user-avatar.png", import.meta.url).href;
 
 const form = reactive({
-  fullName: "Lê Thị Ánh Ngọc",
-  email: "ngoclee22803@gmail.com",
-  phone: "0394446103",
-  dob: "2003-08-22",
-  avatarUrl: new URL("@/assets/images/user-avatar.png", import.meta.url).href,
+  id: null,
+  fullName: "",
+  email: "",
+  phone: "",
+  dob: "",
+  avatarUrl: defaultAvatar,
+  avatarFile: null,
 });
 
-function formatDate(dateStr) {
-  const [y, m, d] = dateStr.split("-");
-  return `${d}/${m}/${y}`;
-}
+const validatePhoneNumber = () => {
+  if (!form.phone) {
+    phoneError.value = "";
+    return true;
+  }
+  if (!/^\d{10}$/.test(form.phone)) {
+    phoneError.value = "Số điện thoại phải đúng 10 số và chỉ chứa chữ số";
+    return false;
+  }
+  phoneError.value = "";
+  return true;
+};
 
-function handleSubmit() {
-  alert("Đã lưu thông tin!");
-}
+const fetchUserProfile = async () => {
+  try {
+    const authData = localStorage.getItem('auth');
+    if (!authData) {
+      throw new Error("No auth data found in localStorage");
+    }
+    const { token } = JSON.parse(authData);
+    if (!token) {
+      throw new Error("No token found in auth data");
+    }
+    const response = await userService.getCurrentUser();
+    console.log("User profile response:", response.data); // Log chi tiết response
+    Object.assign(form, {
+      id: response.data.id,
+      fullName: response.data.fullName || "",
+      email: response.data.email || "",
+      phone: response.data.phoneNumber || "",
+      dob: response.data.birthDate || "",
+      avatarUrl: response.data.avatarUrl || defaultAvatar,
+    });
+  } catch (error) {
+    console.error("Error fetching user profile:", error.response?.data || error.message);
+    alert("Không thể tải thông tin tài khoản: " + (error.response?.data?.error || error.message));
+  }
+};
 
-function triggerUpload() {
+const handleSubmit = async () => {
+  try {
+    if (!validatePhoneNumber()) {
+      return;
+    }
+
+    let avatarUrl = null;
+
+    if (form.avatarFile) {
+      const formData = new FormData();
+      formData.append('file', form.avatarFile);
+      const uploadResponse = await userService.uploadAvatar(formData);
+      avatarUrl = uploadResponse.data.url;
+      console.log("Avatar uploaded URL:", avatarUrl);
+    } else {
+      avatarUrl = form.avatarUrl === defaultAvatar ? null : form.avatarUrl;
+    }
+
+    const userData = {
+      fullName: form.fullName || null,
+      email: form.email,
+      phoneNumber: form.phone || null,
+      birthDate: form.dob || null,
+      avatarUrl: avatarUrl,
+    };
+    console.log("Dữ liệu gửi lên:", JSON.stringify(userData, null, 2));
+
+    const response = await userService.updateCurrentUser(userData);
+    console.log("Response from updateCurrentUser:", response.data); // Log chi tiết response
+
+    Object.assign(form, {
+      id: response.data.id,
+      fullName: response.data.fullName || "",
+      email: response.data.email || "",
+      phone: response.data.phoneNumber || "",
+      dob: response.data.birthDate || "",
+      avatarUrl: response.data.avatarUrl || defaultAvatar,
+      avatarFile: null,
+    });
+    console.log("Final avatarUrl in form after update:", form.avatarUrl);
+
+    if (form.avatarUrl && form.avatarUrl !== defaultAvatar) {
+      form.avatarUrl = form.avatarUrl + '?t=' + new Date().getTime();
+    }
+
+    alert("Đã lưu thông tin!");
+  } catch (error) {
+    const errorMessage = error.response?.data?.error || error.message || "Lỗi không xác định";
+    alert(`Cập nhật thất bại: ${errorMessage}`);
+    console.error("Error updating user:", error.response?.data || error);
+  }
+};
+
+const handleImageError = (event) => {
+  console.error("Failed to load image:", form.avatarUrl);
+  form.avatarUrl = defaultAvatar;
+};
+
+const triggerUpload = () => {
   fileInput.value.click();
-}
+};
 
-function handleAvatarChange(e) {
+const handleAvatarChange = (e) => {
   const file = e.target.files[0];
   if (file) {
+    form.avatarFile = file;
     const reader = new FileReader();
     reader.onload = () => {
       form.avatarUrl = reader.result;
     };
     reader.readAsDataURL(file);
   }
-}
+};
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return "";
+  const [y, m, d] = dateStr.split("-");
+  return `${d}/${m}/${y}`;
+};
+
+onMounted(() => {
+  fetchUserProfile();
+});
 </script>
 
 <style scoped lang="scss">

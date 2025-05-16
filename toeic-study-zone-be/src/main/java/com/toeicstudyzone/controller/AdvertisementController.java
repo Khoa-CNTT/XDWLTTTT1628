@@ -41,4 +41,9 @@ public class AdvertisementController {
     public ResponseEntity<List<AdvertisementResponse>> getAllActiveAdvertisements() {
         return ResponseEntity.ok(advertisementService.getAllActiveAdvertisements());
     }
+    @GetMapping
+public ResponseEntity<List<AdvertisementResponse>> getAllAdvertisements() {
+    return ResponseEntity.ok(advertisementService.getAllAdvertisements());
+}
+
 }

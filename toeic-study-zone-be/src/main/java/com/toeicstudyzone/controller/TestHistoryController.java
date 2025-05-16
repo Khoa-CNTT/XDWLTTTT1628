@@ -1,5 +1,6 @@
 package com.toeicstudyzone.controller;
 
+import com.toeicstudyzone.dto.request.UserTestHistoryDTO;
 import com.toeicstudyzone.entity.UserTestHistory;
 import com.toeicstudyzone.entity.User;
 import com.toeicstudyzone.entity.ToeicTest;
@@ -9,6 +10,7 @@ import com.toeicstudyzone.repository.ToeicTestRepository;
 import com.toeicstudyzone.repository.UserTestHistoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -168,7 +170,20 @@ public class TestHistoryController {
 
             // Lưu qua service
             UserTestHistory savedHistory = testHistoryService.saveHistory(testHistory);
-            return ResponseEntity.ok(savedHistory);
+            return ResponseEntity.ok(new UserTestHistoryDTO(
+                savedHistory.getId(),
+                savedHistory.getUser().getId(),
+                savedHistory.getTest().getId(),
+                savedHistory.getTest().getTitle(),
+                savedHistory.getTest().getTestYear().getYear(),
+                savedHistory.getStartTime(),
+                savedHistory.getEndTime(),
+                savedHistory.getTotalScore(),
+                savedHistory.getListeningScore(),
+                savedHistory.getReadingScore(),
+                savedHistory.getCorrectAnswers(),
+                savedHistory.getCompleted()
+            ));
 
         } catch (Exception e) {
             return ResponseEntity.status(500).body(createErrorResponse("Error saving test history: " + e.getMessage()));
@@ -176,8 +191,9 @@ public class TestHistoryController {
     }
 
     @GetMapping("/user/{userId}")
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getHistoryByUser(@PathVariable Long userId) {
-        List<UserTestHistory> history = userTestHistoryRepository.findByUserId(userId);
+        List<UserTestHistoryDTO> history = testHistoryService.getHistoryByUserId(userId);
         if (history.isEmpty()) {
             return ResponseEntity.status(404).body(createErrorResponse("No history found for user ID: " + userId));
         }
@@ -185,8 +201,9 @@ public class TestHistoryController {
     }
 
     @GetMapping("/test/{testId}")
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getHistoryByTest(@PathVariable Long testId) {
-        List<UserTestHistory> history = userTestHistoryRepository.findByTestId(testId);
+        List<UserTestHistoryDTO> history = testHistoryService.getHistoryByTestId(testId);
         if (history.isEmpty()) {
             return ResponseEntity.status(404).body(createErrorResponse("No history found for test ID: " + testId));
         }

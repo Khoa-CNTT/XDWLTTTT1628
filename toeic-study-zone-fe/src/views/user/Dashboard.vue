@@ -1,32 +1,23 @@
 <!-- src/views/user/Dashboard.vue -->
 <template>
   <div class="dashboard-container">
-    <!-- Hero Section -->
+    <Advertisement v-if="showAdModal" @close="showAdModal = false" />
     <div class="container">
       <section class="hero-section">
-        <!-- Welcome Section -->
         <div class="welcome-section">
           <h1 class="greeting">Xin chào, {{ username }}!</h1>
           <div v-if="!hasGoal" class="notification-text">
             ⏰ Bạn chưa tạo mục tiêu cho quá trình luyện thi của mình.
-            <a href="#" class="action-link" @click.prevent="openStudyGoalsModal"
-              >Tạo ngay</a
-            >
+            <a href="#" class="action-link" @click.prevent="openStudyGoalsModal">Tạo ngay</a>
           </div>
-
-          <!-- Nếu đã có mục tiêu thì hiển thị -->
           <div v-else class="study-goal-box">
             <h3>Mục tiêu luyện thi hiện tại của bạn 🎯</h3>
             <ul>
-              <li><strong>Môn thi:</strong> {{ userGoal.subject }}</li>
-              <li><strong>Ngày dự thi:</strong> {{ userGoal.examDate }}</li>
-              <li>
-                <strong>Mục tiêu điểm số:</strong> {{ userGoal.targetScore }}
-              </li>
+              <li><strong>Môn thi:</strong> TOEIC</li>
+              <li><strong>Ngày dự thi:</strong> {{ formatDate(userGoal.targetDate) }}</li>
+              <li><strong>Mục tiêu điểm số:</strong> {{ userGoal.targetScore }}</li>
             </ul>
-            <a href="#" @click.prevent="openStudyGoalsModal"
-              >📝 Cập nhật mục tiêu</a
-            >
+            <a href="#" @click.prevent="openStudyGoalsModal">📝 Cập nhật mục tiêu</a>
           </div>
         </div>
 
@@ -36,9 +27,7 @@
           <p class="empty-text">
             <em>
               Bạn không có lịch học hôm nay. Vui lòng vào
-              <router-link to="/schedule-form" class="action-link">
-                Lịch học của tôi
-              </router-link>
+              <router-link to="/schedule-form" class="action-link">Lịch học của tôi</router-link>
               để xem thêm hoặc tạo mới.
             </em>
           </p>
@@ -185,9 +174,7 @@
       <div class="row">
         <div
           class="col-md-3"
-          v-for="(test, index) in newTests.slice(4, 8)"
-          :key="'test2-' + index"
-        >
+          v-for="(test, index) in newTests.slice(4, 8)":key="'test2-' + index">
           <div class="test-card">
             <h4 class="test-title">{{ test.title }}</h4>
             <p class="test-time">
@@ -229,146 +216,183 @@
     <!-- Modal StudyGoals -->
     <study-goals
       :show-modal="showStudyGoalsModal"
+      :current-goal="userGoal"
       @close="closeStudyGoalsModal"
       @save="handleSaveGoal"
+      @delete="handleDeleteGoal"
     />
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { useAuthStore } from "@/store/useAuthStore";
+import userService from "@/services/userService";
+import Advertisement from "@/layouts/Advertisement.vue";
 import StudyGoals from "@/views/user/StudyGoals.vue";
+import "@/assets/css/Dashboard.css";
 
-export default {
-  name: "Dashboard",
-  components: {
-    StudyGoals,
-  },
-  data() {
-    return {
-      username: "longvu2212203",
-      showStudyGoalsModal: false,
-      hasGoal: false,
-      userGoal: null,
-      newTests: [
-        {
-          title: "TOEIC Practice Set test 1",
-          time: "120 phút",
-          participants: "98,281 người thi",
-          comments: "636 bình luận",
-          description: "2 phần thi | 200 câu hỏi",
-        },
-        {
-          title: "TOEIC Practice Set test 2",
-          time: "120 phút",
-          participants: "28,281 người thi",
-          comments: "236 bình luận",
-          description: "2 phần thi | 200 câu hỏi",
-        },
-        {
-          title: "TOEIC Practice Set test 3",
-          time: "120 phút",
-          participants: "9,281 người thi",
-          comments: "636 bình luận",
-          description: "2 phần thi | 200 câu hỏi",
-        },
-        {
-          title: "TOEIC Practice Set test 4",
-          time: "120 phút",
-          participants: "9,281 người thi",
-          comments: "236 bình luận",
-          description: "2 phần thi | 200 câu hỏi",
-        },
-        {
-          title: "TOEIC Practice Set test 5",
-          time: "120 phút",
-          participants: "928,281 người thi",
-          comments: "636 bình luận",
-          description: "2 phần thi | 200 câu hỏi",
-        },
-        {
-          title: "TOEIC Practice Set test 6",
-          time: "120 phút",
-          participants: "28,281 người thi",
-          comments: "236 bình luận",
-          description: "2 phần thi | 200 câu hỏi",
-        },
-        {
-          title: "TOEIC Practice Set test 7",
-          time: "120 phút",
-          participants: "9,281 người thi",
-          comments: "636 bình luận",
-          description: "2 phần thi | 200 câu hỏi",
-        },
-        {
-          title: "TOEIC Practice Set test 8",
-          time: "120 phút",
-          participants: "9,281 người thi",
-          comments: "236 bình luận",
-          description: "2 phần thi | 200 câu hỏi",
-        },
-      ],
-      featuredCourses: [
-        {
-          id: 1,
-          title: "TOEIC Complete Course",
-          image:
-            "https://study4.com/media/courses/Course/files/2023/10/11/toeic.webp",
-          description: "Lộ trình học TOEIC từ 0 đến 900+ trong 3 tháng.",
-          rating: "4.9",
-          reviews: "1,000+ học viên",
-          originalPrice: "1,800,000đ",
-          salePrice: "989,000đ",
-          discount: "45",
-          hasDiscount: true,
-        },
-        {
-          id: 2,
-          title: "TOEIC Listening Intensive",
-          image:
-            "https://study4.com/media/courses/Course/files/2023/10/11/ielts_funda.webp",
-          description: "Luyện kỹ năng Listening TOEIC từ cơ bản đến nâng cao.",
-          rating: "5.0",
-          reviews: "800+ học viên",
-          originalPrice: "999,000đ",
-          salePrice: "699,000đ",
-          discount: "30",
-          hasDiscount: true,
-        },
-        {
-          id: 3,
-          title: "TOEIC Reading Mastery",
-          image:
-            "https://study4.com/media/courses/Course/files/2023/11/30/intensive_listen.webp",
-          description: "Nền tảng kỹ năng Reading TOEIC để đạt điểm cao.",
-          rating: "5.0",
-          reviews: "600+ học viên",
-          originalPrice: "999,000đ",
-          salePrice: "699,000đ",
-          discount: "30",
-          hasDiscount: true,
-        },
-      ],
-    };
-  },
-  methods: {
-    openStudyGoalsModal() {
-      this.showStudyGoalsModal = true;
-    },
-    closeStudyGoalsModal() {
-      this.showStudyGoalsModal = false;
-    },
-    handleSaveGoal(goal) {
-      console.log("Mục tiêu đã được lưu:", goal);
-      this.hasGoal = true;
-      this.userGoal = goal;
-      this.showStudyGoalsModal = false;
-    },
-  },
+const router = useRouter();
+const authStore = useAuthStore();
+const showStudyGoalsModal = ref(false);
+const hasGoal = ref(false);
+const showAdModal = ref(true);
+const userGoal = ref(null);
+
+const username = computed(() => authStore.username || "bạn");
+
+const openStudyGoalsModal = () => {
+  showStudyGoalsModal.value = true;
 };
+
+const closeStudyGoalsModal = () => {
+  showStudyGoalsModal.value = false;
+};
+
+const handleSaveGoal = async () => {
+  await loadUserGoal();
+  showStudyGoalsModal.value = false;
+};
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return "";
+  return new Date(dateStr).toLocaleDateString("vi-VN");
+};
+
+const loadUserGoal = async () => {
+  try {
+    const userRes = await userService.getCurrentUser();
+    authStore.username = userRes.data.username;
+    const userId = userRes.data.id;
+
+    const goalRes = await userService.getLearningGoals(userId);
+    if (goalRes.data && goalRes.data.length > 0) {
+      userGoal.value = goalRes.data[0];
+      hasGoal.value = true;
+    } else {
+      hasGoal.value = false;
+    }
+  } catch (err) {
+    console.error("Lỗi khi tải mục tiêu học:", err);
+  }
+};
+
+onMounted(() => {
+  if (authStore.isAuthenticated) {
+    loadUserGoal();
+  }
+});
+
+const handleDeleteGoal = async () => {
+  userGoal.value = null;
+  hasGoal.value = false;
+  showStudyGoalsModal.value = false;
+};
+
+const newTests = [
+  {
+    title: "TOEIC Practice Set test 1",
+    time: "120 phút",
+    participants: "98,281 người thi",
+    comments: "636 bình luận",
+    description: "2 phần thi | 200 câu hỏi",
+  },
+  {
+    title: "TOEIC Practice Set test 2",
+    time: "120 phút",
+    participants: "28,281 người thi",
+    comments: "236 bình luận",
+    description: "2 phần thi | 200 câu hỏi",
+  },
+  {
+    title: "TOEIC Practice Set test 3",
+    time: "120 phút",
+    participants: "9,281 người thi",
+    comments: "636 bình luận",
+    description: "2 phần thi | 200 câu hỏi",
+  },
+  {
+    title: "TOEIC Practice Set test 4",
+    time: "120 phút",
+    participants: "9,281 người thi",
+    comments: "236 bình luận",
+    description: "2 phần thi | 200 câu hỏi",
+  },
+  {
+    title: "TOEIC Practice Set test 5",
+    time: "120 phút",
+    participants: "928,281 người thi",
+    comments: "636 bình luận",
+    description: "2 phần thi | 200 câu hỏi",
+  },
+  {
+    title: "TOEIC Practice Set test 6",
+    time: "120 phút",
+    participants: "28,281 người thi",
+    comments: "236 bình luận",
+    description: "2 phần thi | 200 câu hỏi",
+  },
+  {
+    title: "TOEIC Practice Set test 7",
+    time: "120 phút",
+    participants: "9,281 người thi",
+    comments: "636 bình luận",
+    description: "2 phần thi | 200 câu hỏi",
+  },
+  {
+    title: "TOEIC Practice Set test 8",
+    time: "120 phút",
+    participants: "9,281 người thi",
+    comments: "236 bình luận",
+    description: "2 phần thi | 200 câu hỏi",
+  },
+];
+
+const featuredCourses = [
+  {
+    id: 1,
+    title: "TOEIC Complete Course",
+    image:
+      "https://study4.com/media/courses/Course/files/2023/10/11/toeic.webp",
+    description: "Lộ trình học TOEIC từ 0 đến 900+ trong 3 tháng.",
+    rating: "4.9",
+    reviews: "1,000+ học viên",
+    originalPrice: "1,800,000đ",
+    salePrice: "989,000đ",
+    discount: "45",
+    hasDiscount: true,
+  },
+  {
+    id: 2,
+    title: "TOEIC Listening Intensive",
+    image:
+      "https://study4.com/media/courses/Course/files/2023/10/11/ielts_funda.webp",
+    description: "Luyện kỹ năng Listening TOEIC từ cơ bản đến nâng cao.",
+    rating: "5.0",
+    reviews: "800+ học viên",
+    originalPrice: "999,000đ",
+    salePrice: "699,000đ",
+    discount: "30",
+    hasDiscount: true,
+  },
+  {
+    id: 3,
+    title: "TOEIC Reading Mastery",
+    image:
+      "https://study4.com/media/courses/Course/files/2023/11/30/intensive_listen.webp",
+    description: "Nền tảng kỹ năng Reading TOEIC để đạt điểm cao.",
+    rating: "5.0",
+    reviews: "600+ học viên",
+    originalPrice: "999,000đ",
+    salePrice: "699,000đ",
+    discount: "30",
+    hasDiscount: true,
+  },
+];
 </script>
 
 <style scoped>
-/* Giữ nguyên style hiện tại của Dashboard.vue */
 .dashboard-container {
   max-width: 2200px;
   width: 100%;
@@ -559,7 +583,6 @@ export default {
   text-decoration: underline;
 }
 
-/* Rest of your existing styles (unchanged) */
 .banner-section {
   margin-bottom: 24px;
   padding: 0 60px;

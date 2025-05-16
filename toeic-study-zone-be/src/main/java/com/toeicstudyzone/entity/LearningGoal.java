@@ -9,6 +9,16 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "learning_goals")
 public class LearningGoal {
+    
+    private Boolean isCompleted;
+    public Boolean getIsCompleted() {
+        return isCompleted;
+    }
+
+    public void setIsCompleted(Boolean isCompleted) {
+        this.isCompleted = isCompleted;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

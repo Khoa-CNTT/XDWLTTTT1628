@@ -1,4 +1,3 @@
-<!-- src/components/auth/LoginFormm.vue -->
 <template>
   <div class="login-form-container">
     <form @submit.prevent="submitForm">
@@ -29,8 +28,15 @@
           <i :class="showPassword ? 'fas fa-eye' : 'fas fa-eye-slash'"></i>
         </span>
       </div>
-      <button type="submit" class="btn btn-primary w-100 mb-3">
-        Đăng nhập
+      <div v-if="error" class="text-danger text-center mb-3">
+        {{ error }}
+      </div>
+      <button
+        type="submit"
+        class="btn btn-primary w-100 mb-3"
+        :disabled="loading"
+      >
+        {{ loading ? "Đang đăng nhập..." : "Đăng nhập" }}
       </button>
       <div class="text-center">
         <a href="#" class="forgot-password">Quên mật khẩu?</a>
@@ -48,20 +54,40 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { useAuthStore } from "../../store/useAuthStore";
 
 const email = ref("");
 const password = ref("");
 const showPassword = ref(false);
+const error = ref(null);
+const loading = ref(false);
 const router = useRouter();
+const authStore = useAuthStore();
 
-const emit = defineEmits(["submit"]);
+const submitForm = async () => {
+  loading.value = true;
+  error.value = null;
 
-const submitForm = () => {
   const formData = {
     email: email.value,
     password: password.value,
   };
-  emit("submit", formData);
+  console.log("Sending login request with:", formData);
+
+  const result = await authStore.login(formData);
+  console.log("Login response:", result);
+  loading.value = false;
+
+  if (result.success) {
+    // Chuyển hướng dựa trên role
+    if (authStore.role === "ADMIN") {
+      router.push("/admin/dashboard");
+    } else {
+      router.push("/dashboard");
+    }
+  } else {
+    error.value = result.message;
+  }
 };
 
 const goToRegister = () => {
@@ -96,7 +122,7 @@ const togglePasswordVisibility = () => {
     border: 1px solid #dcdcdc;
     padding: 0.75rem 40px 0.75rem 0.75rem;
     line-height: 1.5;
-    box-sizing: border-box;
+    box-sizing: box-sizing;
   }
 
   .position-relative {
@@ -125,6 +151,11 @@ const togglePasswordVisibility = () => {
 
     &:hover {
       background-color: #166fe5;
+    }
+
+    &:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
     }
   }
 

@@ -6,13 +6,13 @@ const authRoutes = [
     path: "/login",
     name: "Login",
     component: Login,
-    meta: { layout: "auth" },
+    meta: { layout: "auth", requiresGuest: true },
   },
   {
     path: "/register",
     name: "Register",
     component: Register,
-    meta: { layout: "auth" },
+    meta: { layout: "auth", requiresGuest: true },
   },
 ];
 

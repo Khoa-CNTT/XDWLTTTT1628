@@ -17,4 +17,14 @@ export default defineConfig({
       },
     },
   },
+  // server: {
+  //   port: 5173, // Đảm bảo frontend chạy trên cổng 5173 (mặc định của Vite)
+  //   proxy: {
+  //     '/api': {
+  //       target: 'http://localhost:8080', // Chuyển tiếp request tới backend
+  //       changeOrigin: true,
+  //       secure: false,
+  //     },
+  //   },
+  // },
 });

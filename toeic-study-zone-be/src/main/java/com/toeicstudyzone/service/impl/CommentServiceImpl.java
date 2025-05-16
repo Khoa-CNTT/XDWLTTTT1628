@@ -1,12 +1,16 @@
 package com.toeicstudyzone.service.impl;
 
+import com.toeicstudyzone.dto.request.CommentDTO;
 import com.toeicstudyzone.entity.Comment;
 import com.toeicstudyzone.repository.CommentRepository;
 import com.toeicstudyzone.service.CommentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class CommentServiceImpl implements CommentService {
@@ -23,13 +27,39 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public List<Comment> getCommentsByTestId(Long testId) {
-        return commentRepository.findByTestId(testId);
+    @Transactional(readOnly = true)
+    public List<CommentDTO> getCommentsByTestId(Long testId) {
+        List<Comment> comments = commentRepository.findByTestId(testId);
+        return comments.stream().map(comment -> new CommentDTO(
+            comment.getId(),
+            comment.getUser().getId(),
+            comment.getTest().getId(),
+            comment.getTest().getTitle(),
+            comment.getTest().getTestYear().getYear(),
+            comment.getParent() != null ? comment.getParent().getId() : null,
+            comment.getCommentText(),
+            comment.getCreatedAt(),
+            comment.getUpdatedAt(),
+            comment.getStatus().name()
+        )).collect(Collectors.toList());
     }
 
     @Override
-    public List<Comment> getRepliesByParentId(Long parentId) {
-        return commentRepository.findByParentId(parentId);
+    @Transactional(readOnly = true)
+    public List<CommentDTO> getRepliesByParentId(Long parentId) {
+        List<Comment> replies = commentRepository.findByParentId(parentId);
+        return replies.stream().map(comment -> new CommentDTO(
+            comment.getId(),
+            comment.getUser().getId(),
+            comment.getTest().getId(),
+            comment.getTest().getTitle(),
+            comment.getTest().getTestYear().getYear(),
+            comment.getParent() != null ? comment.getParent().getId() : null,
+            comment.getCommentText(),
+            comment.getCreatedAt(),
+            comment.getUpdatedAt(),
+            comment.getStatus().name()
+        )).collect(Collectors.toList());
     }
 
     @Override

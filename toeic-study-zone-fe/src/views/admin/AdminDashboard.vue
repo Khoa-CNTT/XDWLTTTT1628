@@ -1,6 +1,6 @@
 <template>
   <div class="admin-dashboard">
-    <!-- Header logo bar -->
+    <!-- Header -->
     <nav class="admin-header">
       <div class="logo">
         <img :src="logo" alt="Logo" />
@@ -15,71 +15,87 @@
       <p>Dashboard</p>
     </div>
 
-    <!-- Overview Cards -->
+    <!-- Tổng quan -->
     <div class="cards">
-      <div class="card">
-        <i class="fas fa-user"></i>
+      <div class="card" v-for="item in summaryItems" :key="item.title">
+        <i :class="item.icon"></i>
         <div>
-          <h2>1,250</h2>
-          <p>Total Users</p>
-        </div>
-      </div>
-      <div class="card">
-        <i class="fas fa-clipboard-list"></i>
-        <div>
-          <h2>230</h2>
-          <p>Total Tests</p>
-        </div>
-      </div>
-      <div class="card">
-        <i class="fas fa-chart-bar"></i>
-        <div>
-          <h2>15,800</h2>
-          <p>Total Submissions</p>
-        </div>
-      </div>
-      <div class="card">
-        <i class="fas fa-check-circle"></i>
-        <div>
-          <h2>8.2</h2>
-          <p>Avg. Test Score</p>
+          <h2>{{ item.value }}</h2>
+          <p>{{ item.title }}</p>
         </div>
       </div>
     </div>
 
-    <!-- Charts & Tables (fake placeholder for now) -->
+    <!-- Biểu đồ -->
     <div class="chart-section">
       <div class="chart-card">
-        <h3>User Statistics</h3>
-        <div class="chart-placeholder">[Chart Here]</div>
+        <h3>Top 5 bài thi được làm nhiều nhất</h3>
+        <BarChart :chart-data="topTestChart" />
       </div>
       <div class="chart-card">
-        <h3>Test Performance</h3>
-        <div class="chart-placeholder">[Line Chart Here]</div>
-      </div>
-    </div>
-
-    <div class="info-section">
-      <div class="info-card">
-        <h3>Recent Submissions</h3>
-        <ul>
-          <li>Jenny Wilson - English Test</li>
-          <li>Ronald Richards - Reading Test</li>
-        </ul>
-      </div>
-      <div class="info-card">
-        <h3>Active Admins</h3>
-        <ul>
-          <li>Robert Fox - 37</li>
-          <li>Esther Howard - 27</li>
-        </ul>
+        <h3>Tỷ lệ người dùng hoàn thành mục tiêu</h3>
+        <p>
+          Tổng: {{ goalStats.totalGoals }} |
+          Đã hoàn thành: {{ goalStats.completedGoals }} |
+          Tỷ lệ: {{ goalStats.completionRate.toFixed(1) }}%
+        </p>
+        <progress class="form-range w-100" :value="goalStats.completionRate" max="100"></progress>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import logo from "@/assets/images/logo-study-zone.png";
+import { ref, onMounted, computed } from 'vue';
+import logo from '@/assets/images/logo-study-zone.png';
+import BarChart from '@/views/admin/BarChart.vue';
+import statisticsService from '@/services/statisticsService';
+
+const summary = ref({});
+const topTests = ref([]);
+const goalStats = ref({
+  totalGoals: 0,
+  completedGoals: 0,
+  completionRate: 0,
+});
+
+const summaryItems = computed(() => [
+  { title: 'Người dùng', value: summary.value.totalUsers, icon: 'fas fa-user' },
+  { title: 'Bài thi', value: summary.value.totalTests, icon: 'fas fa-clipboard-list' },
+  { title: 'Đã nộp', value: summary.value.completedTests, icon: 'fas fa-chart-bar' },
+  { title: 'Điểm TB', value: summary.value.averageScore, icon: 'fas fa-check-circle' },
+  { title: 'Bình luận', value: summary.value.totalComments, icon: 'fas fa-comment' },
+]);
+
+const topTestChart = computed(() => {
+  const labels = topTests.value.map(t => t.testTitle);
+  const data = topTests.value.map(t => t.totalAttempts);
+  return {
+    labels,
+    datasets: [
+      {
+        label: 'Số lượt làm',
+        data,
+        backgroundColor: '#1877f2',
+      },
+    ],
+  };
+});
+
+onMounted(async () => {
+  try {
+    const [s, t, g] = await Promise.all([
+      statisticsService.getSummary(),
+      statisticsService.getTopTests(),
+      statisticsService.getGoalCompletion(),
+    ]);
+    summary.value = s.data;
+    topTests.value = t.data;
+    goalStats.value = g.data;
+  } catch (err) {
+    console.error('Lỗi tải dashboard:', err);
+  }
+});
 </script>
 
 <style scoped>
@@ -103,29 +119,24 @@ import logo from "@/assets/images/logo-study-zone.png";
   display: flex;
   align-items: center;
 }
-
 .logo img {
   height: 48px;
   margin-right: 10px;
 }
-
 .brand-text {
   font-size: 1.6rem;
   font-weight: bold;
   color: #1877f2;
   text-transform: uppercase;
 }
-
 .admin-name {
   font-size: 1.2rem;
   font-weight: 600;
 }
-
 .page-title h1 {
   font-size: 2.2rem;
   margin-bottom: 0.25rem;
 }
-
 .page-title p {
   color: #777;
   margin-bottom: 2rem;
@@ -137,7 +148,6 @@ import logo from "@/assets/images/logo-study-zone.png";
   flex-wrap: wrap;
   margin-bottom: 2rem;
 }
-
 .card {
   background: white;
   padding: 1.5rem;
@@ -148,46 +158,29 @@ import logo from "@/assets/images/logo-study-zone.png";
   gap: 1rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
-
 .card i {
   font-size: 2rem;
   color: #1877f2;
 }
-
 .card h2 {
   font-size: 1.6rem;
   margin: 0;
 }
-
 .card p {
   color: #555;
   margin: 0;
 }
 
-.chart-section,
-.info-section {
+.chart-section {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 2rem;
   margin-top: 2rem;
 }
-
-.chart-card,
-.info-card {
+.chart-card {
   background: white;
   padding: 1.5rem;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-
-.chart-placeholder {
-  height: 200px;
-  background-color: #e0e0e0;
-  border-radius: 8px;
-  margin-top: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #555;
 }
 </style>

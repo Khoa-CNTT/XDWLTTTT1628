@@ -1,8 +1,10 @@
 <template>
   <div class="container py-4">
     <h4 class="mb-4 fw-bold">Quản lý người dùng</h4>
+    <button class="btn btn-success mb-3" @click="openCreateModal">
+      <i class="fas fa-user-plus"></i> Tạo tài khoản
+    </button>
 
-    <!-- Tìm kiếm -->
     <div class="mb-3 d-flex align-items-center">
       <input
         type="text"
@@ -15,7 +17,6 @@
       </button>
     </div>
 
-    <!-- Bảng danh sách -->
     <table class="table table-bordered table-hover">
       <thead class="table-light">
         <tr>
@@ -42,8 +43,8 @@
               {{ user.status }}
             </span>
           </td>
-          <td>{{ formatDateTime(user.created_at) }}</td>
-          <td>{{ formatDateTime(user.last_login_at || user.created_at) }}</td>
+          <td>{{ formatDateTime(user.createdAt) }}</td>
+          <td>{{ formatDateTime(user.updatedAt || user.createdAt) }}</td>
           <td>
             <button
               class="btn btn-sm btn-warning me-2"
@@ -64,7 +65,6 @@
       </tbody>
     </table>
 
-    <!-- Modal chỉnh sửa người dùng -->
     <div
       class="modal fade"
       id="editUserModal"
@@ -88,19 +88,18 @@
           <div class="modal-body">
             <form @submit.prevent="submitEditUser">
               <div class="mb-3">
-                <label for="edit-fullName" class="form-label">Họ tên:</label>
+                <label for="edit-fullName" class="form-label">Họ tên: *</label>
                 <input
                   type="text"
                   class="form-control"
                   id="edit-fullName"
                   v-model="editUser.fullName"
-                  required
                 />
               </div>
               <div class="mb-3">
-                <label for="edit-email" class="form-label">Email:</label>
+                <label for="edit-email" class="form-label">Email: *</label>
                 <input
-                  type="text"
+                  type="email"
                   class="form-control"
                   id="edit-email"
                   v-model="editUser.email"
@@ -114,8 +113,14 @@
                   class="form-control"
                   id="edit-phoneNumber"
                   v-model="editUser.phoneNumber"
-                  required
+                  pattern="[0-9]{10}"
+                  title="Số điện thoại phải đúng 10 số"
+                  :class="{ 'is-invalid': phoneNumberError }"
+                  @input="validatePhoneNumber('edit')"
                 />
+                <div v-if="phoneNumberError" class="invalid-feedback">
+                  {{ phoneNumberError }}
+                </div>
               </div>
               <div class="mb-3">
                 <label for="edit-role" class="form-label">Vai trò:</label>
@@ -125,8 +130,8 @@
                   v-model="editUser.role"
                   required
                 >
-                  <option value="Admin">Admin</option>
-                  <option value="User">User</option>
+                  <option value="USER">User</option>
+                  <option value="ADMIN">Admin</option>
                 </select>
               </div>
               <div class="mb-3">
@@ -149,11 +154,102 @@
         </div>
       </div>
     </div>
+
+    <div
+      v-if="showCreateModal"
+      class="fixed-top w-100 h-100 bg-dark bg-opacity-50 d-flex justify-content-center align-items-center"
+    >
+      <div class="bg-white p-4 border border-dark rounded" style="width: 500px">
+        <h5 class="mb-3 fw-bold">Tạo tài khoản</h5>
+        <form @submit.prevent="submitCreateUser">
+          <div v-if="createError" class="alert alert-danger">
+            {{ createError }}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Họ tên *</label>
+            <input
+              type="text"
+              class="form-control border-dark"
+              v-model="createForm.fullName"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email *</label>
+            <input
+              type="email"
+              class="form-control border-dark"
+              v-model="createForm.email"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Số điện thoại</label>
+            <input
+              type="text"
+              class="form-control border-dark"
+              v-model="createForm.phoneNumber"
+              pattern="[0-9]{10}"
+              title="Số điện thoại phải đúng 10 số"
+              :class="{ 'is-invalid': createPhoneNumberError }"
+              @input="validatePhoneNumber('create')"
+            />
+            <div v-if="createPhoneNumberError" class="invalid-feedback">
+              {{ createPhoneNumberError }}
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Mật khẩu *</label>
+            <input
+              type="password"
+              class="form-control border-dark"
+              v-model="createForm.password"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Vai trò</label>
+            <select
+              class="form-select border-dark"
+              v-model="createForm.role"
+              required
+            >
+              <option value="USER">User</option>
+              <option value="ADMIN">Admin</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Trạng thái</label>
+            <select
+              class="form-select border-dark"
+              v-model="createForm.status"
+              required
+            >
+              <option value="Hoạt động">Hoạt động</option>
+              <option value="Khóa">Khóa</option>
+            </select>
+          </div>
+
+          <div class="d-flex justify-content-end mt-4">
+            <button
+              type="button"
+              class="btn btn-secondary me-2"
+              @click="closeCreateModal"
+            >
+              Đóng
+            </button>
+            <button type="submit" class="btn btn-primary">Tạo</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref } from "vue";
+import userService from "@/services/userService";
 
 const users = ref([]);
 const searchKeyword = ref("");
@@ -164,34 +260,107 @@ const editUser = ref({
   phoneNumber: "",
   role: "",
   status: "",
-  created_at: "",
-  last_login_at: "",
+  createdAt: "",
+  updatedAt: "",
 });
+const showCreateModal = ref(false);
+const createError = ref("");
+const createForm = ref({
+  fullName: "",
+  email: "",
+  phoneNumber: "",
+  password: "",
+  role: "USER",
+  status: "Hoạt động",
+});
+const phoneNumberError = ref("");
+const createPhoneNumberError = ref("");
 
-const fetchUsers = () => {
-  // Gọi API sau này
-  users.value = [
-    {
-      id: 1,
-      fullName: "Lê Thị Ánh Ngọc",
-      email: "ngoclee22803@gmail.com",
-      phoneNumber: "0394446103",
-      role: "Admin",
-      status: "Hoạt động",
-      created_at: "2023-01-01T10:00:00Z",
-      last_login_at: "2023-01-02T15:30:00Z",
-    },
-    {
-      id: 2,
-      fullName: "Nguyễn Long Vũ",
-      email: "nguyenlongvu22122003@gmail.com",
-      phoneNumber: "0123456789",
-      role: "Admin",
-      status: "Khóa",
-      created_at: "2023-02-01T09:00:00Z",
-      last_login_at: null,
-    },
-  ];
+const openCreateModal = () => {
+  createForm.value = {
+    fullName: "",
+    email: "",
+    phoneNumber: "",
+    password: "",
+    role: "USER",
+    status: "Hoạt động",
+  };
+  createError.value = "";
+  createPhoneNumberError.value = "";
+  showCreateModal.value = true;
+};
+
+const closeCreateModal = () => {
+  showCreateModal.value = false;
+};
+
+const validatePhoneNumber = (type) => {
+  const phone =
+    type === "edit" ? editUser.value.phoneNumber : createForm.value.phoneNumber;
+  const errorRef = type === "edit" ? phoneNumberError : createPhoneNumberError;
+
+  if (!phone) {
+    errorRef.value = "";
+    return;
+  }
+
+  if (!/^\d{10}$/.test(phone)) {
+    errorRef.value = "Số điện thoại phải đúng 10 số và chỉ chứa chữ số";
+  } else {
+    errorRef.value = "";
+  }
+};
+
+const submitCreateUser = async () => {
+  try {
+    validatePhoneNumber("create");
+    if (createPhoneNumberError.value) {
+      createError.value = createPhoneNumberError.value;
+      return;
+    }
+
+    const userData = {
+      username: createForm.value.email.split("@")[0],
+      fullName: createForm.value.fullName || null,
+      email: createForm.value.email,
+      phoneNumber: createForm.value.phoneNumber || null,
+      password: createForm.value.password,
+      role: createForm.value.role,
+      status: createForm.value.status,
+    };
+    console.log("Dữ liệu gửi lên khi tạo:", JSON.stringify(userData, null, 2));
+    await userService.createUser(userData);
+    showCreateModal.value = false;
+    alert("Tạo tài khoản thành công!");
+    await fetchUsers();
+  } catch (error) {
+    createError.value =
+      error.response?.data?.error || "Tạo tài khoản thất bại!";
+    console.error(
+      "Error creating user:",
+      error.response?.data || error.message
+    );
+  }
+};
+
+const fetchUsers = async () => {
+  try {
+    const response = await userService.getAllUsers(searchKeyword.value);
+    console.log("Dữ liệu từ API:", response.data);
+    users.value = response.data.map((user) => ({
+      ...user,
+      role: user.role || "Chưa có vai trò",
+      fullName: user.fullName || "Chưa có họ tên",
+      phoneNumber: user.phoneNumber || "Chưa có SĐT",
+      status: user.status || "Chưa xác định",
+    }));
+  } catch (error) {
+    console.error(
+      "Lỗi khi lấy danh sách người dùng:",
+      error.response?.data || error.message
+    );
+    users.value = [];
+  }
 };
 
 const getStatusClass = (status) => {
@@ -205,7 +374,6 @@ const getStatusClass = (status) => {
   }
 };
 
-// Hàm định dạng ngày giờ
 const formatDateTime = (date) => {
   if (!date) return "";
   return new Date(date).toLocaleString("vi-VN", {
@@ -217,38 +385,69 @@ const formatDateTime = (date) => {
   });
 };
 
-// Hàm mở modal chỉnh sửa
 const openEditModal = (user) => {
-  editUser.value = { ...user };
+  editUser.value = {
+    ...user,
+    role: user.role === "Chưa có vai trò" ? "USER" : user.role.toUpperCase(),
+    status: user.status || "Hoạt động",
+  };
+  phoneNumberError.value = "";
 };
 
-// Hàm xóa người dùng
-const deleteUser = (userId) => {
+const deleteUser = async (userId) => {
   if (confirm("Bạn có chắc chắn muốn xóa người dùng này?")) {
-    users.value = users.value.filter((user) => user.id !== userId);
-    alert("Xóa người dùng thành công!");
+    try {
+      console.log("Xóa user với ID:", userId);
+      await userService.deleteUser(userId);
+      users.value = users.value.filter((user) => user.id !== userId);
+      alert("Xóa người dùng thành công!");
+    } catch (error) {
+      alert(
+        "Xóa người dùng thất bại: " +
+          (error.response?.data?.error || "Lỗi không xác định")
+      );
+      console.error(
+        "Error deleting user:",
+        error.response?.data || error.message
+      );
+    }
   }
 };
 
-// Hàm lưu thay đổi sau khi chỉnh sửa
-const submitEditUser = () => {
-  // Lấy thông tin gốc của user để giữ nguyên created_at và last_login_at
-  const originalUser = users.value.find(
-    (user) => user.id === editUser.value.id
-  );
-  const updatedUser = {
-    ...editUser.value,
-    created_at: originalUser.created_at, // Giữ nguyên created_at
-    last_login_at: originalUser.last_login_at, // Giữ nguyên last_login_at
-  };
+const submitEditUser = async () => {
+  try {
+    validatePhoneNumber("edit");
+    if (phoneNumberError.value) {
+      alert(phoneNumberError.value);
+      return;
+    }
 
-  users.value = users.value.map((user) =>
-    user.id === updatedUser.id ? updatedUser : user
-  );
-  alert("Cập nhật người dùng thành công!");
-  const modal = document.getElementById("editUserModal");
-  const bootstrapModal = bootstrap.Modal.getInstance(modal);
-  bootstrapModal.hide();
+    const userData = {
+      fullName: editUser.value.fullName || null,
+      email: editUser.value.email,
+      phoneNumber: editUser.value.phoneNumber || null,
+      role: editUser.value.role,
+      status: editUser.value.status,
+    };
+    console.log("Dữ liệu gửi lên khi sửa:", JSON.stringify(userData, null, 2));
+    const response = await userService.updateUser(editUser.value.id, userData);
+    console.log("Cập nhật user thành công:", response.data);
+    users.value = users.value.map((user) =>
+      user.id === editUser.value.id ? { ...user, ...response.data } : user
+    );
+    alert("Cập nhật người dùng thành công!");
+    const modal = document.getElementById("editUserModal");
+    modal.classList.remove("show");
+    modal.style.display = "none";
+    document.body.classList.remove("modal-open");
+    const backdrop = document.querySelector(".modal-backdrop");
+    if (backdrop) backdrop.remove();
+  } catch (error) {
+    const errorMessage =
+      error.response?.data?.error || error.message || "Lỗi không xác định";
+    alert(`Cập nhật thất bại: ${errorMessage}`);
+    console.error("Error updating user:", error.response?.data || error);
+  }
 };
 
 fetchUsers();

@@ -2,6 +2,9 @@ import { createRouter, createWebHistory } from "vue-router";
 import Home from "@/views/Home.vue";
 import authRoutes from "./auth";
 import examsRoutes from "./exams";
+import authGuard from "../middleware/authGuard";
+import guestGuard from "../middleware/guestGuard";
+import adminGuard from "../middleware/adminGuard"; 
 
 // User
 import Dashboard from "@/views/user/Dashboard.vue";
@@ -28,16 +31,20 @@ import RoleManager from "@/views/admin/RoleManager.vue";
 
 const routes = [
   {
-    path: "/",
+    path: "/home",
     name: "Home",
     component: Home,
     meta: { layout: "default" },
   },
   {
+    path: "/",
+    redirect: "/home",
+  },
+  {
     path: "/dashboard",
     name: "Dashboard",
     component: Dashboard,
-    meta: { layout: "default", requiresAuth: true }, // Thêm requiresAuth
+    meta: { layout: "default", requiresAuth: true },
   },
   {
     path: "/introduction",
@@ -94,7 +101,7 @@ const routes = [
     meta: { layout: "default" },
   },
 
-  ...authRoutes, // Spread các route từ authRoutes
+  ...authRoutes,
   ...examsRoutes,
 
   // Admin router
@@ -102,61 +109,61 @@ const routes = [
     path: "/admin/dashboard",
     name: "DashboardAdmin",
     component: DashboardAdmin,
-    meta: { layout: "admin" },
+    meta: { layout: "admin", requiresAuth: true, requiresAdmin: true }, // Bảo vệ bởi requiresAdmin
   },
   {
     path: "/admin/test-history",
     name: "TestHistoryManager",
     component: TestHistoryManager,
-    meta: { layout: "admin" },
+    meta: { layout: "admin", requiresAuth: true, requiresAdmin: true },
   },
   {
     path: "/admin/users-manager",
     name: "UserManager",
     component: UserManager,
-    meta: { layout: "admin" },
+    meta: { layout: "admin", requiresAuth: true, requiresAdmin: true },
   },
   {
     path: "/admin/statistics",
     name: "Statistics",
     component: Statistics,
-    meta: { layout: "admin" },
+    meta: { layout: "admin", requiresAuth: true, requiresAdmin: true },
   },
   {
     path: "/admin/comments",
     name: "Comments",
     component: Comments,
-    meta: { layout: "admin" },
+    meta: { layout: "admin", requiresAuth: true, requiresAdmin: true },
   },
   {
     path: "/admin/schedule-manager",
     name: "ScheduleManager",
     component: ScheduleManager,
-    meta: { layout: "admin" },
+    meta: { layout: "admin", requiresAuth: true, requiresAdmin: true },
   },
   {
     path: "/admin/ads",
     name: "Ads",
     component: Ads,
-    meta: { layout: "admin" },
+    meta: { layout: "admin", requiresAuth: true, requiresAdmin: true },
   },
   {
     path: "/admin/test-bank",
     name: "TestBank",
     component: TestBank,
-    meta: { layout: "admin" },
+    meta: { layout: "admin", requiresAuth: true, requiresAdmin: true },
   },
   {
     path: "/admin/test-manager",
     name: "TestManager",
     component: TestManager,
-    meta: { layout: "admin" },
+    meta: { layout: "admin", requiresAuth: true, requiresAdmin: true },
   },
   {
     path: "/admin/role-manager",
     name: "RoleManager",
     component: RoleManager,
-    meta: { layout: "admin" },
+    meta: { layout: "admin", requiresAuth: true, requiresAdmin: true },
   },
 ];
 
@@ -165,20 +172,17 @@ const router = createRouter({
   routes,
 });
 
-// Navigation Guard để kiểm tra trạng thái đăng nhập
-// router.beforeEach((to, from, next) => {
-//   const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-//   console.log("Navigating to:", to.name, "isLoggedIn:", isLoggedIn); // Debug
-
-//   if (to.meta.requiresAuth && !isLoggedIn) {
-//     // Nếu route yêu cầu đăng nhập mà chưa đăng nhập, chuyển hướng về /login
-//     next("/login");
-//   } else if (to.name === "Login" && isLoggedIn) {
-//     // Nếu đã đăng nhập mà cố truy cập /login, chuyển hướng về /dashboard
-//     next("/dashboard");
-//   } else {
-//     next();
-//   }
-// });
+router.beforeEach((to, from, next) => {
+  if (to.meta.requiresAuth) {
+    return authGuard(to, from, next);
+  }
+  if (to.meta.requiresAdmin) {
+    return adminGuard(to, from, next); // Kiểm tra Admin
+  }
+  if (to.meta.requiresGuest) {
+    return guestGuard(to, from, next);
+  }
+  next();
+});
 
 export default router;

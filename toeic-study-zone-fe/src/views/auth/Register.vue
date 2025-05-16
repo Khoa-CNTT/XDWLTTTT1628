@@ -7,35 +7,41 @@
       <hr class="divider" />
 
       <register-form @submit="handleRegister" />
+      <div class="text-center mt-2" v-if="successMessage">
+        <p class="text-success">{{ successMessage }}</p>
+      </div>
+      <div class="text-center mt-2" v-if="errorMessage">
+        <p class="text-danger">{{ errorMessage }}</p>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { useAuthStore } from "@/store/useAuthStore";
 import RegisterForm from "@/components/auth/RegisterForm.vue";
 
 const router = useRouter();
+const authStore = useAuthStore();
+const successMessage = ref("");
+const errorMessage = ref("");
 
-const handleRegister = (formData) => {
-  if (formData.password !== formData.confirm_password) {
-    alert("Mật khẩu nhập lại không khớp!");
-    return;
+const handleRegister = async (responseData) => {
+  try {
+    if (responseData.success) {
+      successMessage.value = "Đăng ký thành công! Đang chuyển hướng...";
+      setTimeout(() => {
+        router.push("/dashboard"); // Chuyển hướng sau khi đăng ký
+      }, 2000);
+    } else {
+      errorMessage.value = responseData.message || "Đăng ký thất bại!";
+    }
+  } catch (error) {
+    errorMessage.value = "Có lỗi xảy ra, vui lòng thử lại!";
+    console.error("Lỗi xử lý đăng ký:", error);
   }
-
-  const userDataToSend = {
-    full_name: formData.full_name,
-    email: formData.email,
-    password: formData.password,
-    date_of_birth: formData.date_of_birth,
-  };
-
-  console.log("Dữ liệu gửi lên server:", userDataToSend);
-
-  // Gửi lên server nếu có API
-  // await authService.register(userDataToSend);
-
-  router.push("/login");
 };
 </script>
 
@@ -87,6 +93,16 @@ const handleRegister = (formData) => {
   border: 0;
   border-top: 1px solid #dadde1;
   margin: 0.5rem 0 1rem 0;
+}
+
+.text-success {
+  color: #00a400;
+  font-weight: 500;
+}
+
+.text-danger {
+  color: #dc3545;
+  font-weight: 500;
 }
 
 /* Responsive */

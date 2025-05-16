@@ -67,8 +67,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         advertisement.setEndDate(request.getEndDate());
         advertisement.setIsActive(request.getIsActive() != null ? request.getIsActive() : true); 
     }
-
-    private AdvertisementResponse mapToResponse(Advertisement advertisement) {
+private AdvertisementResponse mapToResponse(Advertisement advertisement) {
         AdvertisementResponse response = new AdvertisementResponse();
         response.setId(advertisement.getId());
         response.setTitle(advertisement.getTitle());
@@ -82,4 +81,12 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         response.setUpdatedAt(advertisement.getUpdatedAt());
         return response;
     }
+    @Override
+public List<AdvertisementResponse> getAllAdvertisements() {
+    return advertisementRepository.findAll()
+            .stream()
+            .map(this::mapToResponse)
+            .collect(Collectors.toList());
+}
+
 }

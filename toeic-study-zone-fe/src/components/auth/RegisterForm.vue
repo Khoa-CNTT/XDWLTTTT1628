@@ -76,7 +76,12 @@
       </div>
     </div>
 
-    <button type="submit" class="btn btn-success w-100">Đăng ký</button>
+    <button type="submit" class="btn btn-success w-100" :disabled="loading">
+      {{ loading ? "Đang xử lý..." : "Đăng ký" }}
+    </button>
+    <div class="text-center mt-2" v-if="errorMessage">
+      <p class="text-danger">{{ errorMessage }}</p>
+    </div>
     <div class="text-center">
       <p>
         Đã có tài khoản?
@@ -90,6 +95,10 @@
 
 <script setup>
 import { ref, computed } from "vue";
+import { useAuthStore } from "@/store/useAuthStore";
+import authService from "@/services/authService";
+
+const authStore = useAuthStore();
 
 // Dữ liệu form
 const form = ref({
@@ -101,6 +110,9 @@ const form = ref({
   month: "",
   year: "",
 });
+
+const loading = ref(false);
+const errorMessage = ref("");
 
 // Trạng thái ẩn/hiện mật khẩu
 const showPassword = ref(false);
@@ -126,20 +138,47 @@ const years = computed(() => {
 
 // Gửi dữ liệu
 const emit = defineEmits(["submit"]);
-const handleSubmit = () => {
+const handleSubmit = async () => {
+  loading.value = true;
+  errorMessage.value = "";
+
+  if (form.value.password !== form.value.confirm_password) {
+    errorMessage.value = "Mật khẩu nhập lại không khớp!";
+    loading.value = false;
+    return;
+  }
+
+  if (!form.value.day || !form.value.month || !form.value.year) {
+    errorMessage.value = "Vui lòng chọn ngày sinh!";
+    loading.value = false;
+    return;
+  }
+
   const formatNumber = (n) => String(n).padStart(2, "0");
-  const date_of_birth = `${formatNumber(form.value.day)}-${formatNumber(
+  const birthDate = `${formatNumber(form.value.day)}-${formatNumber(
     form.value.month
   )}-${form.value.year}`;
 
   const userData = {
-    full_name: form.value.full_name,
+    username: form.value.full_name, // Sử dụng full_name làm username
+    fullName: form.value.full_name,
     email: form.value.email,
     password: form.value.password,
-    confirm_password: form.value.confirm_password,
-    date_of_birth,
+    birthDate,
   };
-  emit("submit", userData);
+
+  try {
+    const response = await authService.register(userData);
+    console.log("Đăng ký thành công:", response.data);
+    await authStore.register(userData);
+    emit("submit", response.data);
+  } catch (error) {
+    errorMessage.value =
+      error.response?.data?.message || "Đăng ký thất bại, vui lòng thử lại!";
+    console.error("Lỗi đăng ký:", error);
+  } finally {
+    loading.value = false;
+  }
 };
 </script>
 
@@ -217,7 +256,16 @@ const handleSubmit = () => {
   background-color: #008c00;
 }
 
-/* Responsive: chỉnh lại hiển thị ngày/tháng/năm trên thiết bị nhỏ */
+.btn-success:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.text-danger {
+  color: #dc3545;
+  font-weight: 500;
+}
+
 .row {
   display: flex;
   flex-direction: column;

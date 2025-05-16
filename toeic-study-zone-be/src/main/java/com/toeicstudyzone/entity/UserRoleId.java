@@ -1,5 +1,6 @@
 package com.toeicstudyzone.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -12,6 +13,10 @@ import java.io.Serializable;
 @AllArgsConstructor
 @Embeddable
 public class UserRoleId implements Serializable {
-    private Long userId;
-    private Integer roleId;
+
+    @Column(name = "user_id")
+    private Long userId; 
+
+    @Column(name = "role_id")
+    private Integer roleId; 
 }

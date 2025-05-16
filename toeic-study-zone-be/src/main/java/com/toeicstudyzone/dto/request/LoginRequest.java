@@ -1,15 +1,23 @@
 package com.toeicstudyzone.dto.request;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotNull;
+
 public class LoginRequest {
-    private String username;
+    @NotNull(message = "Email is required")
+    @Email(message = "Email should be valid")
+    private String email;
+
+    @NotNull(message = "Password is required")
     private String password;
 
-    public String getUsername() {
-        return username;
+    // Getters and Setters
+    public String getEmail() {
+        return email;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getPassword() {

@@ -1,77 +1,98 @@
 package com.toeicstudyzone.controller;
 
+import com.toeicstudyzone.dto.request.ToeicTestDTO;
+import com.toeicstudyzone.entity.TestYear;
 import com.toeicstudyzone.entity.ToeicTest;
-import com.toeicstudyzone.repository.ToeicTestRepository;
+import com.toeicstudyzone.repository.TestYearRepository;
+import com.toeicstudyzone.service.ToeicTestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/tests")
 public class ToeicTestController {
 
     @Autowired
-    private ToeicTestRepository toeicTestRepository;
+    private ToeicTestService toeicTestService;
 
-    @GetMapping("/tests")
-    public ResponseEntity<List<ToeicTest>> getAllTests() {
-        List<ToeicTest> tests = toeicTestRepository.findAll();
-        return ResponseEntity.ok(tests);
+    @Autowired
+    private TestYearRepository testYearRepository;
+
+    @GetMapping
+    public ResponseEntity<List<ToeicTestDTO>> getAllTests() {
+        return ResponseEntity.ok(toeicTestService.getAllTests());
     }
 
-    @GetMapping("/tests/year/{yearId}")
-    public ResponseEntity<?> getTestsByYear(@PathVariable Long yearId) {
-        List<ToeicTest> tests = toeicTestRepository.findByTestYearId(yearId);
-        if (tests.isEmpty()) {
-            Map<String, String> error = new HashMap<>();
-            error.put("message", "No tests found for year ID: " + yearId);
-            return ResponseEntity.status(404).body(error);
-        }
-        return ResponseEntity.ok(tests);
+    @GetMapping("/{id}")
+    public ResponseEntity<ToeicTestDTO> getTestById(@PathVariable Long id) {
+        return ResponseEntity.ok(toeicTestService.getTest(id));
     }
 
-    @GetMapping("/tests/{id}")
-    public ResponseEntity<?> getTestById(@PathVariable Long id) {
-        Optional<ToeicTest> test = toeicTestRepository.findById(id);
-        if (!test.isPresent()) {
-            return ResponseEntity.status(404).body("Test not found with ID: " + id);
-        }
-        return ResponseEntity.ok(test.get());
+    @PostMapping
+    public ResponseEntity<ToeicTestDTO> createTest(@RequestBody ToeicTestDTO dto) {
+        ToeicTest test = convertToEntity(dto);
+        ToeicTest created = toeicTestService.createTest(test);
+        return ResponseEntity.ok(convertToDTO(created));
     }
 
-    @PostMapping("/tests")
-    public ResponseEntity<?> createTest(@RequestBody ToeicTest toeicTest) {
-        try {
-            ToeicTest savedTest = toeicTestRepository.save(toeicTest);
-            return ResponseEntity.ok(savedTest);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("Error saving test: " + e.getMessage());
-        }
+    @PutMapping("/{id}")
+    public ResponseEntity<ToeicTestDTO> updateTest(@PathVariable Long id, @RequestBody ToeicTestDTO dto) {
+        ToeicTest test = convertToEntity(dto);
+        ToeicTest updated = toeicTestService.updateTest(id, test);
+        return ResponseEntity.ok(convertToDTO(updated));
     }
 
-    @PutMapping("/tests/{id}")
-    public ResponseEntity<?> updateTest(@PathVariable Long id, @RequestBody ToeicTest toeicTest) {
-        Optional<ToeicTest> existingTest = toeicTestRepository.findById(id);
-        if (!existingTest.isPresent()) {
-            return ResponseEntity.status(404).body("Test not found with ID: " + id);
-        }
-        toeicTest.setId(id);
-        ToeicTest updatedTest = toeicTestRepository.save(toeicTest);
-        return ResponseEntity.ok(updatedTest);
-    }
-
-    @DeleteMapping("/tests/{id}")
-    public ResponseEntity<?> deleteTest(@PathVariable Long id) {
-        Optional<ToeicTest> existingTest = toeicTestRepository.findById(id);
-        if (!existingTest.isPresent()) {
-            return ResponseEntity.status(404).body("Test not found with ID: " + id);
-        }
-        toeicTestRepository.deleteById(id);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteTest(@PathVariable Long id) {
+        toeicTestService.deleteTest(id);
         return ResponseEntity.ok("Test deleted successfully");
+    }
+
+    private ToeicTest convertToEntity(ToeicTestDTO dto) {
+        if (dto == null || dto.getYearId() == null || dto.getYearId() < 2010) {
+            throw new IllegalArgumentException("Invalid year (must be >= 2010)");
+        }
+
+        Optional<TestYear> testYearOpt = testYearRepository.findByYear(dto.getYearId());
+        TestYear testYear = testYearOpt.orElseGet(() -> {
+            TestYear newYear = new TestYear();
+            newYear.setYear(dto.getYearId());
+            return testYearRepository.save(newYear);
+        });
+
+        ToeicTest test = new ToeicTest();
+        test.setId(dto.getId());
+        test.setTitle(dto.getTitle());
+        test.setDescription(dto.getDescription());
+        test.setTotalQuestions(dto.getTotalQuestions());
+        test.setTimeLimit(dto.getTimeLimit());
+        test.setIsFree(dto.getIsFree() != null && dto.getIsFree());
+        test.setIsPublished(dto.getIsPublished() != null && dto.getIsPublished());
+        test.setIsPlacementTest(dto.getIsPlacementTest() != null && dto.getIsPlacementTest());
+        test.setCreatedAt(dto.getCreatedAt() != null ? dto.getCreatedAt() : LocalDateTime.now());
+        test.setUpdatedAt(LocalDateTime.now());
+        test.setTestYear(testYear);
+        return test;
+    }
+
+    private ToeicTestDTO convertToDTO(ToeicTest test) {
+        return new ToeicTestDTO(
+                test.getId(),
+                test.getTitle(),
+                test.getTestYear().getYear(),
+                test.getDescription(),
+                test.getTotalQuestions(),
+                test.getTimeLimit(),
+                test.getIsFree(),
+                test.getIsPublished(),
+                test.getIsPlacementTest(),
+                test.getCreatedAt(),
+                test.getUpdatedAt()
+        );
     }
 }

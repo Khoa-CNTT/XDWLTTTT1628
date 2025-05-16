@@ -1,5 +1,6 @@
 package com.toeicstudyzone.controller;
 
+import com.toeicstudyzone.dto.request.CommentDTO;
 import com.toeicstudyzone.dto.request.CommentRequest;
 import com.toeicstudyzone.entity.Comment;
 import com.toeicstudyzone.entity.User;
@@ -82,7 +83,18 @@ public class CommentController {
             comment.setCommentText(request.getCommentText());
 
             Comment savedComment = commentService.createComment(comment);
-            return ResponseEntity.ok(savedComment);
+            return ResponseEntity.ok(new CommentDTO(
+                savedComment.getId(),
+                savedComment.getUser().getId(),
+                savedComment.getTest().getId(),
+                savedComment.getTest().getTitle(),
+                savedComment.getTest().getTestYear().getYear(),
+                savedComment.getParent() != null ? savedComment.getParent().getId() : null,
+                savedComment.getCommentText(),
+                savedComment.getCreatedAt(),
+                savedComment.getUpdatedAt(),
+                savedComment.getStatus().name()
+            ));
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
             error.put("message", "Error saving comment: " + e.getMessage());
@@ -92,7 +104,7 @@ public class CommentController {
 
     @GetMapping("/test/{testId}")
     public ResponseEntity<?> getCommentsByTest(@PathVariable Long testId) {
-        List<Comment> comments = commentService.getCommentsByTestId(testId);
+        List<CommentDTO> comments = commentService.getCommentsByTestId(testId);
         if (comments.isEmpty()) {
             Map<String, String> error = new HashMap<>();
             error.put("message", "No comments found for test ID: " + testId);
@@ -103,7 +115,7 @@ public class CommentController {
 
     @GetMapping("/replies/{parentId}")
     public ResponseEntity<?> getRepliesByParent(@PathVariable Long parentId) {
-        List<Comment> replies = commentService.getRepliesByParentId(parentId);
+        List<CommentDTO> replies = commentService.getRepliesByParentId(parentId);
         if (replies.isEmpty()) {
             Map<String, String> error = new HashMap<>();
             error.put("message", "No replies found for parent comment ID: " + parentId);
@@ -127,7 +139,19 @@ public class CommentController {
                 error.put("message", "Comment with ID " + id + " not found");
                 return ResponseEntity.status(404).body(error);
             }
-            return ResponseEntity.ok(updatedComment.get());
+            Comment comment = updatedComment.get();
+            return ResponseEntity.ok(new CommentDTO(
+                comment.getId(),
+                comment.getUser().getId(),
+                comment.getTest().getId(),
+                comment.getTest().getTitle(),
+                comment.getTest().getTestYear().getYear(),
+                comment.getParent() != null ? comment.getParent().getId() : null,
+                comment.getCommentText(),
+                comment.getCreatedAt(),
+                comment.getUpdatedAt(),
+                comment.getStatus().name()
+            ));
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
             error.put("message", "Error updating comment: " + e.getMessage());

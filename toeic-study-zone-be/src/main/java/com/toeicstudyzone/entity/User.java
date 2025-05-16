@@ -50,13 +50,8 @@ public class User {
     @Column(name = "status", columnDefinition = "ENUM('ACTIVE', 'LOCKED') DEFAULT 'ACTIVE'")
     private UserStatus status;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-        name = "user_roles",
-        joinColumns = @JoinColumn(name = "user_id"),
-        inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
-    private Set<Role> roles = new HashSet<>();
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<UserRole> userRoles = new HashSet<>();
 
     // Getters, setters
     public Long getId() { return id; }
@@ -81,7 +76,7 @@ public class User {
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
     public UserStatus getStatus() { return status; }
     public void setStatus(UserStatus status) { this.status = status; }
-    public Set<Role> getRoles() { return roles; }
-    public void setRoles(Set<Role> roles) { this.roles = roles; }
-    public void addRole(Role role) { this.roles.add(role); }
+    public Set<UserRole> getUserRoles() { return userRoles; }
+    public void setUserRoles(Set<UserRole> userRoles) { this.userRoles = userRoles; }
+    public void addUserRole(UserRole userRole) { this.userRoles.add(userRole); }
 }

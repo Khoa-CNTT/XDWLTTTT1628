@@ -1,39 +1,28 @@
 package com.toeicstudyzone.service.impl;
 
+import com.toeicstudyzone.dto.request.TestSubmissionRequest;
+import com.toeicstudyzone.dto.request.ToeicTestDTO;
+import com.toeicstudyzone.dto.response.QuestionResultDTO;
+import com.toeicstudyzone.dto.response.TestResultResponse;
 import com.toeicstudyzone.entity.*;
+import com.toeicstudyzone.exception.ResourceNotFoundException;
 import com.toeicstudyzone.repository.*;
 import com.toeicstudyzone.service.ToeicTestService;
-import com.toeicstudyzone.dto.response.TestSectionResponse;
-import com.toeicstudyzone.dto.response.PassageResponse;
-import com.toeicstudyzone.dto.response.ParagraphResponse;
-import com.toeicstudyzone.dto.response.QuestionResponse;
-import com.toeicstudyzone.dto.response.AnswerOptionResponse;
-import com.toeicstudyzone.dto.response.ToeicTestResponse;
-import com.toeicstudyzone.dto.response.TestResultResponse;
-import com.toeicstudyzone.dto.response.QuestionResultDTO;
-import com.toeicstudyzone.dto.request.TestSubmissionRequest;
-// import com.toeicstudyzone.dto.request.UserAnswerDTO;
-// import com.toeicstudyzone.enums.QuestionType; 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
 public class ToeicTestServiceImpl implements ToeicTestService {
+
     @Autowired
     private ToeicTestRepository toeicTestRepository;
-
-    // @Autowired
-    // private TestSectionRepository testSectionRepository;
-
-    // @Autowired
-    // private PassageRepository passageRepository;
-
-    // @Autowired
-    // private ParagraphRepository paragraphRepository;
 
     @Autowired
     private QuestionRepository questionRepository;
@@ -48,92 +37,114 @@ public class ToeicTestServiceImpl implements ToeicTestService {
     private UserQuestionResponseRepository userQuestionResponseRepository;
 
     @Override
-    public ToeicTestResponse getTest(Long testId) {
+    @Transactional(readOnly = true)
+    public ToeicTestDTO getTest(Long testId) {
         ToeicTest test = toeicTestRepository.findById(testId)
-                .orElseThrow(() -> new RuntimeException("Test not found"));
-        ToeicTestResponse response = new ToeicTestResponse();
-        response.setId(test.getId());
-        response.setTitle(test.getTitle());
-        response.setTotalQuestions(test.getTotalQuestions());
-        response.setTimeLimit(test.getTimeLimit());
-        response.setSections(test.getSections().stream().map(section -> {
-            TestSectionResponse secResp = new TestSectionResponse();
-            secResp.setSectionType(section.getSectionType());
-            secResp.setSectionPart(section.getSectionPart());
-            secResp.setTitle(section.getTitle());
-            secResp.setInstructions(section.getInstructions());
-            secResp.setPassages(section.getPassages().stream().map(passage -> {
-                PassageResponse passResp = new PassageResponse();
-                passResp.setTitle(passage.getTitle());
-                passResp.setPassageType(passage.getPassageType());
-                passResp.setPassageOrder(passage.getPassageOrder());
-                passResp.setParagraphs(passage.getParagraphs().stream().map(paragraph -> {
-                    ParagraphResponse parResp = new ParagraphResponse();
-                    parResp.setContent(paragraph.getContent());
-                    parResp.setParagraphTitle(paragraph.getParagraphTitle());
-                    parResp.setParagraphOrder(paragraph.getParagraphOrder());
-                    if (paragraph.getImage() != null) {
-                        parResp.setImageUrl(paragraph.getImage().getImageUrl());
-                        parResp.setImageOrder(paragraph.getImage().getImageOrder());
-                    }
-                    return parResp;
-                }).collect(Collectors.toList()));
-                return passResp;
-            }).collect(Collectors.toList()));
-            secResp.setQuestions(section.getQuestions().stream().map(question -> {
-                QuestionResponse qResp = new QuestionResponse();
-                qResp.setId(question.getId());
-                qResp.setQuestionNumber(question.getQuestionNumber());
-                qResp.setContent(question.getContent());
-                qResp.setQuestionType(question.getQuestionType());
-                qResp.setAudioUrl(question.getAudioUrl());
-                qResp.setImageUrl(question.getImageUrl());
-                qResp.setAnswerOptions(question.getAnswerOptions().stream().map(option -> {
-                    AnswerOptionResponse aResp = new AnswerOptionResponse();
-                    aResp.setId(option.getId());
-                    aResp.setContent(option.getContent());
-                    aResp.setOptionLabel(option.getOptionLabel());
-                    return aResp;
-                }).collect(Collectors.toList()));
-                return qResp;
-            }).collect(Collectors.toList()));
-            return secResp;
-        }).collect(Collectors.toList()));
-        return response;
+                .orElseThrow(() -> new ResourceNotFoundException("Test not found with ID: " + testId));
+
+        return new ToeicTestDTO(
+                test.getId(),
+                test.getTitle(),
+                test.getTestYear().getYear(),
+                test.getDescription(),
+                test.getTotalQuestions(),
+                test.getTimeLimit(),
+                test.getIsFree(),
+                test.getIsPublished(),
+                test.getIsPlacementTest(),
+                test.getCreatedAt(),
+                test.getUpdatedAt()
+        );
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<ToeicTestDTO> getTestsByYear(Long yearId) {
+        List<ToeicTest> tests = toeicTestRepository.findByTestYearId(yearId);
+        return tests.stream().map(test -> new ToeicTestDTO(
+                test.getId(),
+                test.getTitle(),
+                test.getTestYear().getYear(),
+                test.getDescription(),
+                test.getTotalQuestions(),
+                test.getTimeLimit(),
+                test.getIsFree(),
+                test.getIsPublished(),
+                test.getIsPlacementTest(),
+                test.getCreatedAt(),
+                test.getUpdatedAt()
+        )).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ToeicTestDTO> getAllTests() {
+        List<ToeicTest> tests = toeicTestRepository.findAll();
+        return tests.stream().map(test -> new ToeicTestDTO(
+                test.getId(),
+                test.getTitle(),
+                test.getTestYear().getYear(),
+                test.getDescription(),
+                test.getTotalQuestions(),
+                test.getTimeLimit(),
+                test.getIsFree(),
+                test.getIsPublished(),
+                test.getIsPlacementTest(),
+                test.getCreatedAt(),
+                test.getUpdatedAt()
+        )).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
     public TestResultResponse submitTest(Long userId, TestSubmissionRequest request) {
         ToeicTest test = toeicTestRepository.findById(request.getToeicTestId())
-                .orElseThrow(() -> new RuntimeException("Test not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Test not found with ID: " + request.getToeicTestId()));
+
         UserTestHistory history = new UserTestHistory();
-        history.setUser(new User());
-        history.getUser().setId(userId);
+        User user = new User();
+        user.setId(userId);
+        history.setUser(user);
         history.setTest(test);
         history.setStartTime(LocalDateTime.now());
         history.setEndTime(LocalDateTime.now());
 
-        int listeningScore = 0;
-        int readingScore = 0;
-        int correctCount = 0;
+        AtomicInteger listeningScore = new AtomicInteger(0);
+        AtomicInteger readingScore = new AtomicInteger(0);
+        AtomicInteger correctCount = new AtomicInteger(0);
 
         List<QuestionResultDTO> results = request.getAnswers().stream().map(answer -> {
             Question question = questionRepository.findById(answer.getQuestionId())
-                    .orElseThrow(() -> new RuntimeException("Question not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Question not found with ID: " + answer.getQuestionId()));
+
             AnswerOption correctOption = question.getAnswerOptions().stream()
-                    .filter(AnswerOption::isCorrect).findFirst().orElse(null);
-            boolean isCorrect = answer.getSelectedOptionId() != null && correctOption != null && 
-                               answer.getSelectedOptionId().equals(correctOption.getId());
+                    .filter(AnswerOption::isCorrect)
+                    .findFirst()
+                    .orElse(null);
+
+            boolean isCorrect = answer.getSelectedOptionId() != null && correctOption != null &&
+                    answer.getSelectedOptionId().equals(correctOption.getId());
+
             UserQuestionResponse userResponse = new UserQuestionResponse();
             userResponse.setUserTestHistory(history);
             userResponse.setQuestion(question);
-            AnswerOption selectedAnswer = answer.getSelectedOptionId() != null ?
-                    answerOptionRepository.findById(answer.getSelectedOptionId())
-                    .orElseThrow(() -> new RuntimeException("Answer option not found")) : null;
+            AnswerOption selectedAnswer = (answer.getSelectedOptionId() != null)
+                    ? answerOptionRepository.findById(answer.getSelectedOptionId())
+                    .orElse(null)
+                    : null;
             userResponse.setSelectedAnswer(selectedAnswer);
             userResponse.setIsCorrect(isCorrect);
             userResponse.setTimeSpent(answer.getTimeSpent());
             userQuestionResponseRepository.save(userResponse);
+
+            if (isCorrect) {
+                if (question.getTestSection().getSectionType() == TestSection.SectionType.LISTENING) {
+                    listeningScore.addAndGet(5);
+                } else {
+                    readingScore.addAndGet(5);
+                }
+                correctCount.incrementAndGet();
+            }
 
             QuestionResultDTO result = new QuestionResultDTO();
             result.setQuestionId(question.getId());
@@ -143,34 +154,63 @@ public class ToeicTestServiceImpl implements ToeicTestService {
             return result;
         }).collect(Collectors.toList());
 
-        // Tính điểm sau khi stream hoàn tất
-        for (QuestionResultDTO result : results) {
-            if (result.isCorrect()) {
-                Question question = questionRepository.findById(result.getQuestionId())
-                        .orElseThrow(() -> new RuntimeException("Question not found"));
-                if (question.getTestSection().getSectionType() == TestSection.SectionType.LISTENING) {
-                    listeningScore += 5;
-                } else {
-                    readingScore += 5;
-                }
-                correctCount++;
-            }
-        }
-
-        history.setTotalScore(listeningScore + readingScore);
-        history.setListeningScore(listeningScore);
-        history.setReadingScore(readingScore);
-        history.setCorrectAnswers(correctCount);
+        history.setTotalScore(listeningScore.get() + readingScore.get());
+        history.setListeningScore(listeningScore.get());
+        history.setReadingScore(readingScore.get());
+        history.setCorrectAnswers(correctCount.get());
         history.setCompleted(true);
+
         userTestHistoryRepository.save(history);
 
         TestResultResponse response = new TestResultResponse();
         response.setTotalScore(history.getTotalScore());
-        response.setListeningScore(listeningScore);
-        response.setReadingScore(readingScore);
-        response.setCorrectCount(correctCount);
-        response.setPercentage((double) correctCount / test.getTotalQuestions() * 100);
+        response.setListeningScore(history.getListeningScore());
+        response.setReadingScore(history.getReadingScore());
+        response.setCorrectCount(correctCount.get());
+        response.setPercentage((double) correctCount.get() / test.getTotalQuestions() * 100);
         response.setResults(results);
         return response;
+    }
+
+    @Override
+    @Transactional
+    public ToeicTest createTest(ToeicTest toeicTest) {
+        if (toeicTest.getTestYear() == null || toeicTest.getTestYear().getYear() == 0) {
+            throw new IllegalArgumentException("Test year is required");
+        }
+        if (toeicTest.getTitle() == null || toeicTest.getTitle().trim().isEmpty()) {
+            throw new IllegalArgumentException("Test title is required");
+        }
+        if (toeicTest.getTotalQuestions() == null || toeicTest.getTotalQuestions() <= 0) {
+            throw new IllegalArgumentException("Total questions must be greater than 0");
+        }
+        return toeicTestRepository.save(toeicTest);
+    }
+
+    @Override
+    @Transactional
+    public ToeicTest updateTest(Long id, ToeicTest updatedTest) {
+        ToeicTest existing = toeicTestRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Test not found with ID: " + id));
+
+        existing.setTitle(updatedTest.getTitle());
+        existing.setDescription(updatedTest.getDescription());
+        existing.setTotalQuestions(updatedTest.getTotalQuestions());
+        existing.setTimeLimit(updatedTest.getTimeLimit());
+        existing.setIsFree(updatedTest.getIsFree());
+        existing.setIsPublished(updatedTest.getIsPublished());
+        existing.setIsPlacementTest(updatedTest.getIsPlacementTest());
+        existing.setTestYear(updatedTest.getTestYear());
+        existing.setUpdatedAt(LocalDateTime.now());
+
+        return toeicTestRepository.save(existing);
+    }
+
+    @Override
+    @Transactional
+    public void deleteTest(Long id) {
+        ToeicTest test = toeicTestRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Test not found with ID: " + id));
+        toeicTestRepository.delete(test);
     }
 }

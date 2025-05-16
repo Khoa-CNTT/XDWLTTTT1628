@@ -21,7 +21,7 @@
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ms-auto">
           <li class="nav-item">
-            <router-link class="nav-link" to="/">Khóa học</router-link>
+            <router-link class="nav-link" to="/dashboard">Dashboard</router-link>
           </li>
           <li class="nav-item">
             <router-link class="nav-link" to="/test-home">Luyện đề</router-link>
@@ -36,17 +36,17 @@
               >Kiểm tra đầu vào</router-link
             >
           </li>
-          <!-- Hiển thị nút Đăng nhập ngay từ đầu -->
-          <li class="nav-item login-button">
+          <!-- Nút Đăng nhập nếu chưa đăng nhập -->
+          <li class="nav-item login-button" v-if="!authStore.isAuthenticated">
             <router-link
               class="nav-link btn btn-primary text-white px-3 py-2"
               to="/login"
-              v-if="!isLoggedIn"
             >
               Đăng nhập
             </router-link>
           </li>
-          <li class="nav-item dropdown" v-if="isLoggedIn">
+          <!-- Avatar và dropdown nếu đã đăng nhập -->
+          <li class="nav-item dropdown" v-if="authStore.isAuthenticated">
             <a
               class="nav-link dropdown-toggle"
               href="#"
@@ -55,7 +55,12 @@
               data-bs-toggle="dropdown"
               aria-expanded="false"
             >
-              <img :src="userAvatar" alt="User Avatar" class="user-avatar" />
+              <img
+                :src="userAvatarUrl || defaultAvatar"
+                alt="User Avatar"
+                class="user-avatar"
+                @error="onImageError"
+              />
             </a>
             <ul
               class="dropdown-menu dropdown-menu-end"
@@ -67,8 +72,8 @@
                 >
               </li>
               <li>
-                <router-link class="dropdown-item" to="/logout"
-                  >Đăng xuất</router-link
+                <a class="dropdown-item" href="#" @click.prevent="logout"
+                  >Đăng xuất</a
                 >
               </li>
             </ul>
@@ -80,18 +85,51 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
+import { useAuthStore } from "../../store/useAuthStore";
+import userService from "@/services/userService"; // Import userService giống Profile.vue
 
 import logo from "@/assets/images/logo-study-zone.png";
-import userAvatar from "@/assets/images/user-avatar.png";
+import defaultAvatar from "@/assets/images/user-avatar.png"; // Đổi tên để đồng bộ với Profile.vue
 
-// Mô phỏng trạng thái đăng nhập (thay bằng logic thực tế khi có BE)
-const isLoggedIn = ref(false);
+// Sử dụng router và authStore
+const router = useRouter();
+const authStore = useAuthStore();
 
-// Để kiểm tra trạng thái đăng nhập khi component được tạo
+// State để lưu avatarUrl từ API
+const userAvatarUrl = ref(null);
+
+// Hàm lấy thông tin tài khoản và avatar
+const fetchUserProfile = async () => {
+  try {
+    const response = await userService.getCurrentUser();
+    console.log("Navbar user profile:", response.data);
+    userAvatarUrl.value = response.data.avatarUrl || defaultAvatar;
+  } catch (error) {
+    console.error("Error fetching user profile in Navbar:", error.response?.data || error.message);
+    userAvatarUrl.value = defaultAvatar; // Fallback nếu lỗi
+  }
+};
+
+// Hàm đăng xuất
+const logout = () => {
+  authStore.logout();
+  router.push("/home");
+};
+
+// Xử lý nếu lỗi ảnh
+const onImageError = (event) => {
+  event.target.src = defaultAvatar;
+};
+
+// Gọi API khi component được mounted
 onMounted(() => {
-  console.log("Trạng thái đăng nhập:", isLoggedIn.value);
-  // Đảm bảo Bootstrap JS được khởi tạo
+  if (authStore.isAuthenticated) {
+    fetchUserProfile(); // Chỉ gọi nếu đã đăng nhập
+  }
+
+  // Khởi tạo dropdown của Bootstrap
   if (typeof bootstrap !== "undefined") {
     const dropdownElementList = document.querySelectorAll(".dropdown-toggle");
     dropdownElementList.forEach((element) => {
@@ -106,14 +144,14 @@ onMounted(() => {
   padding: 1rem 0;
   position: relative;
   z-index: 1000;
-  min-height: 65px; /* Thay height bằng min-height */
+  min-height: 65px;
   width: 100%;
 }
 
 .navbar-brand {
   display: flex;
-  align-items: center; /* Căn giữa theo chiều dọc */
-  height: 100%; /* Chiếm toàn bộ chiều cao */
+  align-items: center;
+  height: 100%;
 }
 
 .logo {
@@ -128,8 +166,8 @@ onMounted(() => {
   color: #1877f2;
   text-transform: uppercase;
   letter-spacing: 1px;
-  line-height: 1; /* Đặt line-height chuẩn */
-  padding-top: 0.2rem; /* Điều chỉnh vị trí nếu cần */
+  line-height: 1;
+  padding-top: 0.2rem;
 }
 
 .nav-link {
@@ -145,7 +183,7 @@ onMounted(() => {
 
 .navbar-nav {
   display: flex;
-  align-items: center; /* Căn giữa các mục điều hướng theo chiều dọc */
+  align-items: center;
 }
 
 .user-avatar {
@@ -166,10 +204,25 @@ onMounted(() => {
   opacity: 1 !important;
 }
 
+.dropdown-menu {
+  min-width: 150px;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-item {
+  font-size: 0.95rem;
+  padding: 0.5rem 1rem;
+}
+
+.dropdown-item:hover {
+  background-color: #f1f1f1;
+}
+
 @media (max-width: 992px) {
   .navbar-nav {
     padding-top: 1rem;
-    align-items: flex-start; /* Trên thiết bị di động, căn chỉnh các mục về phía đầu */
+    align-items: flex-start;
   }
 
   .nav-item {
@@ -181,12 +234,12 @@ onMounted(() => {
   }
 
   .logo {
-    top: 0; /* Đặt lại vị trí trên thiết bị di động */
-    transform: none; /* Xóa transform trên thiết bị di động */
+    top: 0;
+    transform: none;
   }
 
   .navbar {
-    height: auto; /* Cho phép thanh điều hướng mở rộng trên thiết bị di động */
+    height: auto;
   }
 
   .navbar-collapse {

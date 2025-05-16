@@ -14,6 +14,7 @@ public class UserResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private String status;
+    private String role;
 
     // Constructor không tham số
     public UserResponse() {
@@ -22,7 +23,7 @@ public class UserResponse {
     // Constructor với tham số
     public UserResponse(Long id, String username, String email, String fullName, String phoneNumber,
                         LocalDate birthDate, String avatarUrl, LocalDateTime createdAt, LocalDateTime updatedAt,
-                        String status) {
+                        String status, String role) {
         this.id = id;
         this.username = username;
         this.email = email;
@@ -33,6 +34,7 @@ public class UserResponse {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.status = status;
+        this.role = role;
     }
 
     public Long getId() {
@@ -113,5 +115,13 @@ public class UserResponse {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 }

@@ -1,4 +1,3 @@
-<!-- src/views/Login.vue -->
 <template>
   <div class="auth-container">
     <div class="container-fluid h-100 px-0">
@@ -22,8 +21,7 @@
         >
           <div class="form-wrapper">
             <h2 class="form-title">Đăng nhập</h2>
-            <!-- Lắng nghe sự kiện submit từ LoginForm -->
-            <login-form @submit="handleLogin" />
+            <login-form />
             <p class="text-center mt-4">
               Hãy đăng nhập để được luyện thi TOEIC thoải mái.
             </p>
@@ -35,30 +33,8 @@
 </template>
 
 <script setup>
-import { useRouter } from "vue-router"; // Import useRouter để điều hướng
 import LoginForm from "@/components/auth/LoginFormm.vue";
 import logo from "@/assets/images/logo-study-zone.png";
-
-const router = useRouter(); // Khởi tạo router
-
-const handleLogin = (formData) => {
-  console.log("Đăng nhập với:", formData);
-
-  // Mock đăng nhập thành công (vì chưa có backend)
-  // Lưu trạng thái đăng nhập vào localStorage
-  localStorage.setItem("isLoggedIn", "true");
-  localStorage.setItem(
-    "user",
-    JSON.stringify({
-      email: formData.email,
-      fullName: "Người dùng mẫu", // Mock dữ liệu, thay bằng dữ liệu thực từ backend sau
-      roles: ["User"],
-    })
-  );
-
-  // Chuyển hướng đến Dashboard
-  router.push("/dashboard");
-};
 </script>
 
 <style lang="scss" scoped>
@@ -66,7 +42,7 @@ const handleLogin = (formData) => {
   max-width: 200px;
   height: auto;
   mix-blend-mode: multiply;
-  filter: contrast(1.1); /* Tăng độ tương phản nếu cần */
+  filter: contrast(1.1);
   margin: 0 0 0 20%;
 }
 
@@ -120,7 +96,6 @@ const handleLogin = (formData) => {
   line-height: 1.6;
 }
 
-/* Style cho tiêu đề đăng nhập */
 .form-title {
   font-size: 2rem;
   font-weight: bold;

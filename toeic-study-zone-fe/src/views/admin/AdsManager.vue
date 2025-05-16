@@ -38,12 +38,15 @@
               </span>
             </td>
             <td>
-              <div class="btn-group btn-group-sm">
-                <button class="btn btn-info text-white" @click="viewDetail(ad)">
-                  Xem chi tiết
+              <div class=" gap-2">
+                <button
+                  class="btn btn-info btn-sm text-white"
+                  @click="viewDetail(ad)"
+                >
+                  Xem
                 </button>
-                <button class="btn btn-danger" @click="deleteAd(ad.id)">
-                  Xóa
+                <button class="btn btn-danger btn-sm" @click="deleteAd(ad.id)">
+                   Xóa
                 </button>
               </div>
             </td>
@@ -120,12 +123,16 @@
             class="form-control mb-2"
             placeholder="URL đích"
           />
+
+          <label class="form-label text-start d-block">Ngày chiếu</label>
           <input
             v-model="newAd.startDate"
             type="date"
             class="form-control mb-2"
             required
           />
+
+          <label class="form-label text-start d-block">Ngày hết hạn</label>
           <input
             v-model="newAd.endDate"
             type="date"
@@ -148,52 +155,61 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
+import { useAdvertisementStore } from "@/store/advertisementStore";
 
+const adStore = useAdvertisementStore();
 const ads = ref([]);
-const selectedAd = ref(null);
 const showCreateModal = ref(false);
-
+const selectedAd = ref(null);
 const newAd = ref({
   title: "",
-  description: "",
   imageUrl: "",
+  description: "",
   linkUrl: "",
-  position: "",
   startDate: "",
   endDate: "",
-  isActive: true,
 });
+
+onMounted(async () => {
+  await adStore.fetchAll();
+  ads.value = adStore.advertisements || [];
+});
+
+const createAd = async () => {
+  const payload = {
+    ...newAd.value,
+    redirectUrl: newAd.value.linkUrl,
+  };
+  await adStore.create(payload);
+  showCreateModal.value = false;
+  Object.assign(newAd.value, {
+    title: "",
+    imageUrl: "",
+    description: "",
+    linkUrl: "",
+    startDate: "",
+    endDate: "",
+  });
+  await adStore.fetchAll();
+  ads.value = adStore.advertisements;
+};
+
+const deleteAd = async (id) => {
+  if (confirm("Xoá quảng cáo này?")) {
+    await adStore.delete(id);
+    await adStore.fetchAll();
+    ads.value = adStore.advertisements;
+  }
+};
 
 const viewDetail = (ad) => {
   selectedAd.value = ad;
 };
 
-const createAd = () => {
-  ads.value.push({
-    id: Date.now(),
-    ...newAd.value,
-  });
-  showCreateModal.value = false;
-  newAd.value = {
-    title: "",
-    description: "",
-    imageUrl: "",
-    linkUrl: "",
-    position: "",
-    startDate: "",
-    endDate: "",
-    isActive: true,
-  };
+const formatDate = (dateStr) => {
+  return new Date(dateStr).toLocaleDateString("vi-VN");
 };
-
-const deleteAd = (id) => {
-  if (confirm("Bạn có chắc chắn muốn xóa quảng cáo này?")) {
-    ads.value = ads.value.filter((ad) => ad.id !== id);
-  }
-};
-
-const formatDate = (str) => new Date(str).toLocaleDateString("vi-VN");
 </script>
 
 <style scoped>
@@ -209,6 +225,7 @@ const formatDate = (str) => new Date(str).toLocaleDateString("vi-VN");
   justify-content: center;
   align-items: center;
 }
+
 .modal-content-custom {
   background: white;
   border-radius: 8px;
@@ -216,7 +233,56 @@ const formatDate = (str) => new Date(str).toLocaleDateString("vi-VN");
   width: 100%;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
+
 .table img {
   object-fit: cover;
+}
+
+.btn {
+  min-width: 90px;
+  margin-right: 6px;
+}
+
+.modal-content-custom img {
+  max-height: 250px;
+  object-fit: contain;
+}
+
+.btn-info {
+  background-color: #17a2b8;
+  border-color: #17a2b8;
+}
+
+.btn-info:hover {
+  background-color: #138496;
+  border-color: #117a8b;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
+.btn-danger:hover {
+  background-color: #bd2130;
+  border-color: #b21f2d;
+}
+
+
+
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  border-radius: 0.2rem;
+}
+
+.d-flex.gap-2 > .btn {
+  min-width: 90px;
+}
+
+.form-label{
+  margin-left: 20px;
+  font-weight: 600;
 }
 </style>

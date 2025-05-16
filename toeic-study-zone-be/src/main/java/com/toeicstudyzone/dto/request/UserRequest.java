@@ -10,6 +10,8 @@ public class UserRequest {
     private String phoneNumber;
     private LocalDate birthDate;
     private String avatarUrl;
+    private String role;
+    private String status; 
 
     public String getUsername() {
         return username;
@@ -65,5 +67,21 @@ public class UserRequest {
 
     public void setAvatarUrl(String avatarUrl) {
         this.avatarUrl = avatarUrl;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

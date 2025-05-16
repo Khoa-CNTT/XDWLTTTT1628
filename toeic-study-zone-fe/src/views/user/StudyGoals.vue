@@ -1,3 +1,4 @@
+<!-- src/views/user/StudyGoals.vue -->
 <template>
   <div class="modal-overlay" v-if="showModal" @click.self="closeModal">
     <div class="modal-content">
@@ -7,11 +8,9 @@
       </div>
       <div class="modal-body">
         <p class="modal-description">
-          Lưu ý: Bạn chỉ được tạo 1 mục tiêu cho mỗi môn thi. Bạn có thể đổi
-          ngày dự thi và điểm mục tiêu sau khi khởi tạo.
+          Lưu ý: Bạn chỉ được tạo 1 mục tiêu cho mỗi môn thi. Bạn có thể đổi ngày dự thi và điểm mục tiêu sau khi khởi tạo.
         </p>
 
-        <!-- Chọn môn thi -->
         <div class="form-group">
           <label class="form-label">Chọn môn thi</label>
           <div class="subjects-grid">
@@ -27,9 +26,7 @@
           </div>
         </div>
 
-        <!-- Ngày dự thi và Điểm mục tiêu -->
         <div class="form-row">
-          <!-- Ngày dự thi -->
           <div class="form-group">
             <label class="form-label">Ngày dự thi</label>
             <div class="input-icon-wrapper">
@@ -38,98 +35,116 @@
             </div>
           </div>
 
-          <!-- Điểm mục tiêu -->
           <div class="form-group">
             <label class="form-label">Điểm mục tiêu</label>
-            <div
-              class="score-input-wrapper"
-              @mouseenter="showControls = true"
-              @mouseleave="showControls = false"
-            >
-              <input
-                type="number"
-                class="score-input"
-                v-model.number="targetScore"
-                min="0"
-              />
+            <div class="score-input-wrapper" @mouseenter="showControls = true" @mouseleave="showControls = false">
+              <input type="number" class="score-input" v-model.number="targetScore" min="0" />
               <div class="score-controls" v-show="showControls">
-                <button class="score-btn" @click="incrementScore">
-                  <span class="arrow-up">▲</span>
-                </button>
-                <button class="score-btn" @click="decrementScore">
-                  <span class="arrow-down">▼</span>
-                </button>
+                <button class="score-btn" @click="incrementScore"><span class="arrow-up">▲</span></button>
+                <button class="score-btn" @click="decrementScore"><span class="arrow-down">▼</span></button>
               </div>
             </div>
           </div>
         </div>
       </div>
+
       <div class="modal-footer">
         <button class="btn btn-primary" @click="saveGoal">Lưu</button>
+        <button v-if="currentGoal && currentGoal.id" class="btn btn-danger" @click="deleteGoal">Xoá</button>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import userService from "@/services/userService";
+
 export default {
   name: "StudyGoals",
   props: {
-    showModal: {
-      type: Boolean,
-      default: false,
-    },
+    showModal: Boolean,
+    currentGoal: Object,
   },
   data() {
     return {
-      selectedSubject: "",
+      selectedSubject: "TOEIC",
       examDate: "",
       targetScore: 0,
-      subjects: [
-        "IELTS Academic",
-        "IELTS General",
-        "TOEIC",
-        "Toán THPTQG",
-        "Tiếng Anh THPTQG",
-        "Sinh học THPTQG",
-        "Vật lý THPTQG",
-      ],
       showControls: false,
+      subjects: [
+        "TOEIC",
+      ],
     };
+  },
+  watch: {
+    currentGoal: {
+      immediate: true,
+      handler(goal) {
+        if (goal) {
+          this.examDate = goal.targetDate || "";
+          this.targetScore = goal.targetScore || 0;
+        }
+      },
+    },
   },
   methods: {
     closeModal() {
       this.$emit("close");
     },
-
     async saveGoal() {
-      const updatedGoal = {
-        examDate: this.examDate,
-        targetScore: this.targetScore,
-      };
+      if (!this.examDate || !this.targetScore) {
+        alert("Vui lòng nhập đầy đủ thông tin.");
+        return;
+      }
 
       try {
-        const response = await axios.put(
-          "http://localhost:3000/studyGoal",
-          updatedGoal
-        );
-        this.$emit("save");
+        const res = await userService.getCurrentUser();
+        const userId = res.data.id;
+        const payload = {
+          userId,
+          targetScore: this.targetScore,
+          targetDate: this.examDate,
+        };
+
+        if (this.currentGoal && this.currentGoal.id) {
+          await userService.updateLearningGoal(this.currentGoal.id, payload);
+          alert("Mục tiêu đã được cập nhật!");
+        } else {
+          await userService.createLearningGoal(payload);
+          alert("Mục tiêu đã được tạo!");
+        }
+
+        this.$emit("save", payload);
+        this.closeModal();
       } catch (error) {
-        console.error("Lỗi khi cập nhật study goal:", error);
+        console.error("Lỗi khi lưu mục tiêu:", error);
+        alert("Không thể lưu mục tiêu. Vui lòng thử lại!");
       }
     },
+    async deleteGoal() {
+      const confirmed = confirm("Bạn có chắc chắn muốn xoá mục tiêu này không?");
+      if (!confirmed) return;
 
+      try {
+        await userService.deleteLearningGoal(this.currentGoal.id);
+        alert("Mục tiêu đã được xoá!");
+         this.$emit("delete");
+        this.closeModal();
+      } catch (error) {
+        console.error("Lỗi khi xoá mục tiêu:", error);
+        alert("Không thể xoá mục tiêu. Vui lòng thử lại!");
+      }
+    },
     incrementScore() {
       this.targetScore++;
     },
     decrementScore() {
-      if (this.targetScore > 0) {
-        this.targetScore--;
-      }
+      if (this.targetScore > 0) this.targetScore--;
     },
   },
 };
 </script>
+
 
 <style scoped>
 .form-row {
@@ -174,7 +189,7 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 9999;
 }
 
 .modal-content {
@@ -237,7 +252,7 @@ export default {
 .subjects-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
 }
 
 .subject-btn {
@@ -297,18 +312,33 @@ export default {
   text-align: right;
 }
 
-.btn-primary {
-  background: #1976d2;
-  border: none;
-  color: #fff;
+.btn {
   padding: 8px 16px;
-  border-radius: 4px;
+  font-size: 16px;
   font-weight: 600;
+  border: none;
+  border-radius: 4px;
   cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  margin-left: 10px;
+}
+
+.btn-primary {
+  background-color: #1976d2;
+  color: white;
 }
 
 .btn-primary:hover {
-  background: #1565c0;
+  background-color: #1565c0;
+}
+
+.btn-danger {
+  background-color: #e53935;
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #c62828;
 }
 
 .score-input-wrapper {

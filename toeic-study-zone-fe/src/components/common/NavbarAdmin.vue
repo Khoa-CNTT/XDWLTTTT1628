@@ -73,7 +73,7 @@
         </router-link>
       </li>
       <li>
-        <router-link to="/admin/ai-assistant">
+        <router-link to="">
           <i class="fas fa-robot"></i>
           <span>Trợ lý AI</span>
         </router-link>

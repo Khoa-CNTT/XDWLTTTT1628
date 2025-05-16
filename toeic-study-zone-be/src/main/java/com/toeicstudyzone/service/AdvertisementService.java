@@ -11,4 +11,6 @@ public interface AdvertisementService {
     void deleteAdvertisement(Long id);
     AdvertisementResponse getAdvertisementById(Long id);
     List<AdvertisementResponse> getAllActiveAdvertisements();
+    List<AdvertisementResponse> getAllAdvertisements();
+
 }

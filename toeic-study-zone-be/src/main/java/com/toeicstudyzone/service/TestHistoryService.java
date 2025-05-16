@@ -1,10 +1,13 @@
 package com.toeicstudyzone.service;
 
-  import com.toeicstudyzone.entity.UserTestHistory;
+import com.toeicstudyzone.dto.request.UserTestHistoryDTO; 
+import com.toeicstudyzone.entity.UserTestHistory;
 
-  public interface TestHistoryService {
+import java.util.List;
 
-      UserTestHistory saveHistory(UserTestHistory history);
-
-      UserTestHistory getHistoryById(Long id);
-  }
+public interface TestHistoryService {
+    UserTestHistory saveHistory(UserTestHistory history);
+    UserTestHistory getHistoryById(Long id);
+    List<UserTestHistoryDTO> getHistoryByUserId(Long userId); // Thêm phương thức mới
+    List<UserTestHistoryDTO> getHistoryByTestId(Long testId); // Thêm phương thức mới
+}

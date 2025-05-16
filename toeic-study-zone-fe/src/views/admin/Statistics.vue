@@ -1,109 +1,97 @@
 <template>
-  <div class="p-4">
-    <h4 class="fw-bold mb-4">
-      <i class="bi bi-bar-chart-fill me-2"></i> Thống kê người dùng làm bài
-      nhiều nhất
-    </h4>
+  <div class="p-6">
+    <h2 class="text-2xl font-bold mb-6">📊 Thống kê</h2>
 
-    <!-- Bộ lọc theo tháng/năm -->
-    <div class="row g-3 mb-4">
-      <div class="col-md-3">
-        <select v-model="selectedMonth" class="form-select">
-          <option disabled value="">Chọn tháng</option>
-          <option v-for="m in 12" :key="m" :value="m">
-            {{ m < 10 ? "0" + m : m }}
-          </option>
-        </select>
-      </div>
-      <div class="col-md-3">
-        <select v-model="selectedYear" class="form-select">
-          <option disabled value="">Chọn năm</option>
-          <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
-        </select>
-      </div>
-      <div class="col-md-3">
-        <button class="btn btn-primary w-100" @click="applyFilters">
-          Lọc dữ liệu
-        </button>
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+      <div
+        v-for="item in summaryItems"
+        :key="item.title"
+        class="rounded-2xl p-4 shadow text-center bg-white border border-gray-200"
+      >
+        <div class="text-2xl font-bold text-blue-600">{{ item.value }}</div>
+        <div class="text-sm text-gray-500">{{ item.title }}</div>
       </div>
     </div>
 
-    <!-- Biểu đồ -->
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <h6 class="fw-bold mb-3">Biểu đồ người dùng làm bài nhiều nhất</h6>
-        <BarChart :chart-data="chartData" />
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div class="card shadow-sm p-4 bg-white rounded-xl">
+        <h5 class="text-lg font-semibold mb-4">📌 Top 5 bài thi được làm nhiều nhất</h5>
+        <BarChart :chart-data="topTestChart" />
+      </div>
+
+      <div class="card shadow-sm p-4 bg-white rounded-xl">
+        <h5 class="text-lg font-semibold mb-4">🎯 Tỷ lệ hoàn thành mục tiêu</h5>
+        <div class="text-sm text-gray-600 mb-2">
+          Tổng: {{ goalStats.totalGoals }} | Hoàn thành: {{ goalStats.completedGoals }} |
+          Tỷ lệ: {{ goalStats.completionRate.toFixed(1) }}%
+        </div>
+        <div class="w-full h-4 bg-gray-200 rounded-full">
+          <div
+            class="h-4 bg-blue-500 rounded-full"
+            :style="{ width: goalStats.completionRate + '%' }"
+          ></div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
-import BarChart from "@/views/admin/BarChart.vue";
+import { ref, onMounted, computed } from 'vue';
+import BarChart from '@/views/admin/BarChart.vue';
+import statisticsService from '@/services/statisticsService';
 
-const selectedMonth = ref("");
-const selectedYear = ref("");
-const years = [2023, 2024, 2025];
-
-const allTests = ref([
-  { user: "Nguyễn Văn A", date: "2025-04-10" },
-  { user: "Nguyễn Văn B", date: "2025-04-10" },
-  { user: "Lê Thị Ánh Ngọc", date: "2025-04-05" },
-  { user: "Nguyễn Văn A", date: "2025-04-12" },
-  { user: "Nguyễn Văn C", date: "2025-03-15" },
-  { user: "Nguyễn Văn A", date: "2025-04-19" },
-  { user: "Nguyễn Văn B", date: "2025-04-25" },
-  { user: "Lê Thị Ánh Ngọc", date: "2025-04-28" },
-  { user: "Nguyễn Văn D", date: "2025-04-08" },
-  { user: "Nguyễn Văn A", date: "2025-04-30" },
+const summary = ref({});
+const topTests = ref([]);
+const goalStats = ref({
+  totalGoals: 0,
+  completedGoals: 0,
+  completionRate: 0,
+});
+const summaryItems = computed(() => [
+  { title: 'Người dùng', value: summary.value.totalUsers },
+  { title: 'Bài thi', value: summary.value.totalTests },
+  { title: 'Đã nộp', value: summary.value.completedTests },
+  { title: 'Điểm TB', value: summary.value.averageScore },
+  { title: 'Bình luận', value: summary.value.totalComments },
 ]);
 
-const filteredTests = ref([]);
 
-function applyFilters() {
-  if (!selectedMonth.value || !selectedYear.value) return;
-
-  filteredTests.value = allTests.value.filter((test) => {
-    const d = new Date(test.date);
-    const month = d.getMonth() + 1;
-    const year = d.getFullYear();
-    return (
-      month === Number(selectedMonth.value) &&
-      year === Number(selectedYear.value)
-    );
-  });
-}
-
-const chartData = computed(() => {
-  const userCounts = {};
-
-  filteredTests.value.forEach((t) => {
-    userCounts[t.user] = (userCounts[t.user] || 0) + 1;
-  });
-
-  const sortedUsers = Object.entries(userCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5);
-
-  const labels = sortedUsers.map(([user]) => user);
-  const data = sortedUsers.map(([_, count]) => count);
-
+const topTestChart = computed(() => {
+  const labels = topTests.value.map(t => t.testTitle);
+  const data = topTests.value.map(t => t.totalAttempts);
   return {
     labels,
     datasets: [
       {
-        label: "Số lần làm bài",
+        label: 'Số lượt làm',
         data,
-        backgroundColor: "#0d6efd",
+        backgroundColor: '#3b82f6',
+        borderRadius: 5,
       },
     ],
   };
 });
+
+onMounted(async () => {
+  try {
+    const [s, t, g] = await Promise.all([
+      statisticsService.getSummary(),
+      statisticsService.getTopTests(),
+      statisticsService.getGoalCompletion(),
+    ]);
+
+    summary.value = s.data;
+    topTests.value = t.data;
+    goalStats.value = g.data;
+  } catch (err) {
+    console.error('Lỗi thống kê:', err);
+  }
+});
 </script>
 
 <style scoped>
-select.form-select {
-  font-size: 15px;
+.card {
+  border: 1px solid #e5e7eb;
 }
 </style>
