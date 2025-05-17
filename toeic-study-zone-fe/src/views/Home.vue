@@ -66,29 +66,28 @@
       </div>
     </section>
 
-    <!-- Tests Section -->
+    <!-- Khoá học -->
     <section class="tests-section">
       <div class="container">
-        <h2 class="section-title">
-          Test trình độ TOEIC miễn phí, có ngay kết quả
-        </h2>
+        <h2 class="section-title">Đề thi mới nhất</h2>
         <p class="section-subtitle">
           Nhận chứng chỉ chính thức - Chứng nhận - Hiệu quả
         </p>
         <div class="row">
-          <div class="col-md-3" v-for="test in tests" :key="test.id">
+          <div class="col-md-3" v-for="test in tests.slice(0, 8)" :key="test.id">
             <div class="test-card">
               <h3 class="test-title">{{ test.title }}</h3>
               <p class="test-time">
-                <span class="icon">⏰</span> {{ test.time }} phút |
+                <span class="icon">⏰</span> {{ test.timeLimit }} phút |
                 <span class="icon">📝</span> {{ test.participants }} người thi |
-                <span class="icon-wrapper">
-                  <span class="icon">💬</span> {{ test.comments }} bình luận
-                </span>
+                <span class="icon">💬</span> {{ test.comments }} bình luận
               </p>
-              <p class="test-description">{{ test.description }}</p>
-
-              <button class="btn btn-outline-primary">Chi tiết</button>
+              <p class="test-description">
+                {{ test.totalQuestions }} câu hỏi | {{ test.description }}
+              </p>
+              <button class="btn btn-outline-primary" @click="goToTestDetail(test.id)">
+                Chi tiết
+              </button>
             </div>
           </div>
         </div>
@@ -123,11 +122,14 @@
 </template>
 
 <script setup>
-// Import hình ảnh
+import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import examService from "@/services/examService";
 import heroImage from "@/assets/images/hero-illustration.png";
 import practiceImage from "@/assets/images/banner-main.png";
 
-// Dữ liệu giả cho các khóa học TOEIC
+const router = useRouter();
+
 const courses = [
   {
     id: 1,
@@ -170,41 +172,32 @@ const courses = [
   },
 ];
 
-// Dữ liệu giả cho các bài kiểm tra TOEIC
-const tests = [
-  {
-    id: 1,
-    title: "TOEIC Practice Set test 1",
-    time: 120,
-    participants: 928281,
-    comments: 636,
-    description: "2 phần thi | 200 câu hỏi",
-  },
-  {
-    id: 2,
-    title: "TOEIC Practice Set test 2",
-    time: 120,
-    participants: 28281,
-    comments: 236,
-    description: "2 phần thi | 200 câu hỏi",
-  },
-  {
-    id: 3,
-    title: "TOEIC Practice Set 3 test 3",
-    time: 120,
-    participants: 9281,
-    comments: 636,
-    description: "2 phần thi | 200 câu hỏi",
-  },
-  {
-    id: 4,
-    title: "TOEIC Practice Set 3 test 4",
-    time: 120,
-    participants: 9281,
-    comments: 236,
-    description: "2 phần thi | 200 câu hỏi",
-  },
-];
+const tests = ref([]);
+
+const loadLatestTests = async () => {
+  try {
+    const res = await examService.getLatestTests();
+    tests.value = res.data.map((test) => ({
+      id: test.id,
+      title: test.title,
+      description: test.description,
+      timeLimit: test.timeLimit,
+      totalQuestions: test.totalQuestions,
+      participants: (test.participantsCount ?? 0).toLocaleString(),
+      comments: (test.commentsCount ?? 0).toLocaleString(),
+    }));
+  } catch (err) {
+    console.error("Lỗi khi tải đề thi mới:", err);
+  }
+};
+
+const goToTestDetail = (id) => {
+  router.push({ name: "Test", params: { id } });
+};
+
+onMounted(() => {
+  loadLatestTests();
+});
 </script>
 
 <style lang="scss" scoped>

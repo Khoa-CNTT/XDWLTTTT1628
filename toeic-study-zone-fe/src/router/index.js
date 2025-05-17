@@ -4,7 +4,7 @@ import authRoutes from "./auth";
 import examsRoutes from "./exams";
 import authGuard from "../middleware/authGuard";
 import guestGuard from "../middleware/guestGuard";
-import adminGuard from "../middleware/adminGuard"; 
+import adminGuard from "../middleware/adminGuard";
 
 // User
 import Dashboard from "@/views/user/Dashboard.vue";
@@ -58,12 +58,15 @@ const routes = [
     component: TestHome,
     meta: { layout: "default" },
   },
+
   {
-    path: "/test",
+    path: "/test/:id",
     name: "Test",
     component: Test,
+    props: true,
     meta: { layout: "default" },
   },
+
   {
     path: "/profile",
     name: "Profile",

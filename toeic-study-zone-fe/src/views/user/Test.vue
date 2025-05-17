@@ -8,7 +8,7 @@
           <div class="d-flex align-items-center mb-2">
             <span class="badge text-dark me-2">#TOEIC</span>
             <h1 class="test-title mb-0">
-              Practice Set TOEIC (old format) Test 1
+              {{ testData?.title || "Đề thi không xác định" }}
             </h1>
           </div>
 
@@ -21,14 +21,23 @@
           <div class="test-info mb-4">
             <div class="d-flex align-items-center mb-2">
               <i class="far fa-clock me-2"></i>
-              <span
-                >Thời gian làm bài: 120 phút | 7 phần | 200 câu hỏi | 13 bình
-                luận</span
-              >
+              <span>
+                Thời gian làm bài: {{ testData?.timeLimit || 0 }} phút |
+                {{ testData?.totalQuestions || 0 }} câu hỏi |
+                {{ testData?.commentsCount || 0 }} bình luận |
+                {{ testData?.description }}
+              </span>
             </div>
             <div class="d-flex align-items-center mb-2">
               <i class="fas fa-users me-2"></i>
-              <span><strong>33924 người đã luyện tập đề thi này</strong></span>
+              <span>
+                <strong
+                  >{{
+                    (testData?.participantsCount ?? 0).toLocaleString()
+                  }}
+                  người đã luyện tập đề thi này</strong
+                >
+              </span>
             </div>
             <p class="test-warning">
               Chú ý: để được quy đổi sang scaled score (ví dụ trên điểm 990 cho
@@ -212,7 +221,7 @@
         <!-- Comments Section -->
         <div class="comments-wrapper mt-4">
           <h5 class="comment-title">Bình luận</h5>
-          <Comments />
+          <Comments :testId="Number(testId)" :user="user" />
         </div>
       </div>
 
@@ -221,12 +230,34 @@
         <div class="sidebar">
           <!-- Thông tin người dùng -->
           <div class="user-info">
-            <div class="avatar"></div>
+            <div class="avatar">
+              <img
+                v-if="user.avatar"
+                :src="user.avatar"
+                alt="avatar"
+                style="
+                  width: 50px;
+                  height: 50px;
+                  border-radius: 50%;
+                  object-fit: cover;
+                "
+              />
+              <div
+                v-else
+                style="
+                  width: 50px;
+                  height: 50px;
+                  background: #ccc;
+                  border-radius: 50%;
+                "
+              ></div>
+            </div>
+
             <div class="user-details">
-              <h4>nguyenlongvu22122003</h4>
-              <p>Ngày dự thi: 13/12/2025</p>
-              <p>Ngành dự thi: TOEIC</p>
-              <p>Điểm mục tiêu: 750</p>
+              <h4>{{ user.username || "Chưa có tên" }}</h4>
+              <p>Ngày dự thi: {{ formatDate(user.targetDate) }}</p>
+              <p>Ngành dự thi: {{ user.examType || "Chưa có" }}</p>
+              <p>Điểm mục tiêu: {{ user.targetScore || "Chưa có" }}</p>
               <button class="stats-button">
                 <span class="icon">📊</span> Lịch sử bài thi
               </button>
@@ -259,69 +290,99 @@
   </main>
 </template>
 
-<script>
+<script setup>
+import { ref, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import examService from "@/services/examService";
+import userService from "@/services/userService";
 import Comments from "./Comments.vue";
-import { ref } from "vue";
-import { useRouter } from "vue-router";
 
-export default {
-  name: "TestPage",
-  components: {
-    Comments,
-  },
-  setup() {
-    const router = useRouter();
-    const selectedParts = ref([]); // Mảng để lưu các phần được chọn
-    const selectedTimeLimit = ref(""); // Thời gian giới hạn
-    const activeTab = ref("practice"); // Tab hiện tại: practice hoặc full-test
+const route = useRoute();
+const router = useRouter();
+const testId = route.params.id;
 
-    // Tạo danh sách tùy chọn thời gian: 0 phút, 5 phút, ..., 135 phút
-    const timeOptions = ref([]);
-    for (let i = 0; i <= 135; i += 5) {
-      timeOptions.value.push(i.toString());
+const testData = ref(null);
+const activeTab = ref("practice");
+const selectedParts = ref([]);
+const selectedTimeLimit = ref("");
+const timeOptions = Array.from({ length: 28 }, (_, i) => (i * 5).toString());
+
+const user = ref({
+  username: "",
+  avatar: null,
+  targetDate: null,
+  targetScore: null,
+  examType: null,
+  id: null,
+});
+
+const loadUserInfo = async () => {
+  try {
+    const res = await userService.getCurrentUser();
+    user.value.id = res.data.id;
+    user.value.username = res.data.username;
+    user.value.avatar = res.data.avatarUrl || null;
+
+    const goalRes = await userService.getLearningGoals(user.value.id);
+    if (goalRes.data.length > 0) {
+      const goal = goalRes.data[0];
+      user.value.targetDate = goal.targetDate;
+      user.value.targetScore = goal.targetScore;
+      user.value.examType = goal.examType || "TOEIC";
     }
+  } catch (err) {
+    console.error("Lỗi khi tải user info:", err);
+  }
+};
 
-    const startPractice = () => {
-      if (selectedParts.value.length === 0) {
-        alert("Vui lòng chọn ít nhất một phần bạn muốn làm!");
-        return;
-      }
+const loadTest = async () => {
+  try {
+    const response = await examService.getTestById(testId);
+    testData.value = response.data;
+  } catch (error) {
+    console.error("Không thể tải đề thi:", error);
+    alert("Không tìm thấy đề thi!");
+    router.push("/test-home");
+  }
+};
 
-      // Chuyển hướng đến TestExam.vue với query parameters
-      router.push({
-        path: "/test-exam",
-        query: {
-          parts: selectedParts.value.join(","), // Truyền danh sách các phần được chọn
-          timeLimit: selectedTimeLimit.value || "0", // 0 nghĩa là không giới hạn
-        },
-      });
-    };
+onMounted(async () => {
+  await loadUserInfo();
+  await loadTest();
+});
 
-    const startFullTest = () => {
-      // Chuyển hướng đến TestExam.vue với thời gian mặc định là 120 phút
-      router.push({
-        path: "/test-exam",
-        query: {
-          parts: "Part 1,Part 2,Part 3,Part 4,Part 5,Part 6,Part 7", // Bao gồm tất cả các phần
-          timeLimit: "120", // Thời gian mặc định cho full test
-        },
-      });
-    };
+const startPractice = () => {
+  if (selectedParts.value.length === 0) {
+    alert("Vui lòng chọn ít nhất một phần!");
+    return;
+  }
 
-    return {
-      selectedParts,
-      selectedTimeLimit,
-      activeTab,
-      timeOptions,
-      startPractice,
-      startFullTest,
-    };
-  },
+  router.push({
+    path: "/test-exam",
+    query: {
+      parts: selectedParts.value.join(","),
+      timeLimit: selectedTimeLimit.value || "0",
+    },
+  });
+};
+
+const startFullTest = () => {
+  router.push({
+    path: "/test-exam",
+    query: {
+      parts: "Part 1,Part 2,Part 3,Part 4,Part 5,Part 6,Part 7",
+      timeLimit: "120",
+    },
+  });
+};
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return "Chưa có";
+  return new Date(dateStr).toLocaleDateString("vi-VN");
 };
 </script>
 
 <style scoped>
-/* CSS giữ nguyên */
 .test-content-wrapper {
   background-color: #fff;
   border: 1px solid #e0e0e0;

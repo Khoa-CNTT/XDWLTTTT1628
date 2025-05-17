@@ -1,8 +1,7 @@
 <template>
   <div class="testhome-container">
-    <!-- Phần chính -->
+    <!-- Main content -->
     <div class="main-content">
-      <!-- Phần lọc đề thi -->
       <div class="filter-section">
         <h1 class="page-title">Thư viện đề thi</h1>
         <div class="tabs">
@@ -17,14 +16,8 @@
           </button>
         </div>
 
-        <!-- Phần lọc đề thi -->
         <div class="filter-section">
-          <!-- Thẻ năm (Buttons) - Chỉ hiển thị khi activeTab không phải là "Tất cả" -->
-          <div
-            class="filter-tags-container"
-            style="margin-bottom: 15px"
-            v-if="activeTab !== 'Tất cả'"
-          >
+          <div class="filter-tags-container" v-if="activeTab !== 'Tất cả'">
             <button
               v-for="tag in filterTags"
               :key="tag"
@@ -36,12 +29,11 @@
             </button>
           </div>
 
-          <!-- Search Input -->
-          <div class="search-input-container" style="margin-bottom: 10px">
+          <div class="search-input-container">
             <input
               type="text"
               v-model="searchQuery"
-              placeholder="Nhập từ khóa bạn muốn tìm kiếm: tên bài thi, số năm bài thi ..."
+              placeholder="Nhập từ khóa: tên bài thi, năm..."
               class="search-input-main"
             />
             <span class="search-icon-main">
@@ -53,13 +45,11 @@
                 viewBox="0 0 16 16"
               >
                 <path
-                  d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"
+                  d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85z"
                 />
               </svg>
             </span>
           </div>
-
-          <!-- Search Button -->
           <button class="search-submit-button" @click="performSearch">
             Tìm kiếm
           </button>
@@ -77,14 +67,21 @@
             <div class="test-card">
               <h4 class="test-title">{{ test.title }}</h4>
               <p class="test-meta">
-                <span class="icon">⏰</span> {{ test.questions }} |
+                <span class="icon">⏰</span> {{ test.timeLimit }} phút |
                 <span class="icon">📝</span> {{ test.participants }}
               </p>
               <p class="test-meta test-comments">
                 <span class="icon">💬</span> {{ test.comments }}
               </p>
-              <p class="test-description">2 phần thi | 200 câu hỏi</p>
-              <button class="btn btn-outline-primary">Chi tiết</button>
+              <p class="test-description">
+                {{ test.totalQuestions }} câu hỏi | {{ test.description }}
+              </p>
+              <button
+                class="btn btn-outline-primary"
+                @click="goToTestDetail(test.id)"
+              >
+                Chi tiết
+              </button>
             </div>
           </div>
         </div>
@@ -92,7 +89,7 @@
         <!-- Phân trang -->
         <div class="pagination">
           <button
-            @click="currentPage = currentPage - 1"
+            @click="currentPage--"
             :disabled="currentPage === 1"
             class="prev-button"
           >
@@ -108,7 +105,7 @@
             {{ page }}
           </button>
           <button
-            @click="currentPage = currentPage + 1"
+            @click="currentPage++"
             :disabled="currentPage === totalPages"
             class="next-button"
           >
@@ -118,37 +115,54 @@
       </div>
     </div>
 
-    <!-- Phần bên phải (Sidebar) -->
+    <!-- Sidebar Thông tin người dùng-->
     <div class="sidebar">
-      <!-- Thông tin người dùng -->
       <div class="user-info">
-        <div class="avatar"></div>
+        <div class="avatar">
+          <img
+            v-if="user.avatar"
+            :src="user.avatar"
+            alt="avatar"
+            style="
+              width: 50px;
+              height: 50px;
+              border-radius: 50%;
+              object-fit: cover;
+            "
+          />
+          <div
+            v-else
+            style="
+              width: 50px;
+              height: 50px;
+              background: #ccc;
+              border-radius: 50%;
+            "
+          ></div>
+        </div>
         <div class="user-details">
-          <h4>nguyenlongvu22122003</h4>
-          <p>Ngày dự thi: 13/12/2025</p>
-          <p>Ngành dự thi: TOEIC</p>
-          <p>Điểm mục tiêu: 750</p>
+          <h4>{{ user.username || "Chưa có tên" }}</h4>
+          <p>Ngày dự thi: {{ formatDate(user.targetDate) }}</p>
+          <p>Ngành dự thi: {{ user.examType || "Chưa có" }}</p>
+          <p>Điểm mục tiêu: {{ user.targetScore || "Chưa có" }}</p>
           <button class="stats-button">
             <span class="icon">📊</span> Lịch sử bài thi
           </button>
         </div>
       </div>
 
-      <!-- Banner quảng cáo -->
       <div class="promo-banner">
         <h3>Kiểm tra trình độ miễn phí</h3>
         <p>Nhanh chóng - Chính xác - Hiệu quả</p>
         <button class="start-button">START</button>
       </div>
 
-      <!-- Nhóm học tập -->
       <div class="study-group">
         <h4>Trao đổi, học tập, Flashcards</h4>
         <p>StudyZone Extension</p>
         <button class="extension-button">Cài đặt ngay</button>
       </div>
 
-      <!-- Cộng đồng -->
       <div class="community">
         <h4>Cộng đồng luyện thi TOEIC</h4>
         <p>Tham gia nhóm Facebook StudyZone</p>
@@ -159,6 +173,9 @@
 </template>
 
 <script>
+import examService from "@/services/examService";
+import userService from "@/services/userService";
+
 export default {
   name: "Testhome",
   data() {
@@ -167,147 +184,36 @@ export default {
       activeFilter: "2024",
       currentPage: 1,
       testsPerPage: 12,
-      searchQuery: "", // Lưu giá trị nhập liệu tạm thời
-      searchTerm: "", // Lưu từ khóa tìm kiếm thực sự
+      searchQuery: "",
+      searchTerm: "",
       tabs: ["Tất cả", "TOEIC"],
       filterTags: ["2024", "2023", "2022", "2021", "2020", "2019", "2018"],
-      tests: [
-        {
-          title: "2024 Practice Set TOEIC Test 1",
-          questions: "120 phút",
-          participants: "1,024 người thi",
-          comments: "636 bình luận",
-        },
-        {
-          title: "2024 Practice Set TOEIC Test 2",
-          questions: "120 phút",
-          participants: "1,729 người thi",
-          comments: "236 bình luận",
-        },
-        {
-          title: "2024 Practice Set TOEIC Test 3",
-          questions: "120 phút",
-          participants: "1,491 người thi",
-          comments: "636 bình luận",
-        },
-        {
-          title: "2024 Practice Set TOEIC Test 4",
-          questions: "120 phút",
-          participants: "36,444 người thi",
-          comments: "236 bình luận",
-        },
-        {
-          title: "2024 Practice Set TOEIC Test 5",
-          questions: "120 phút",
-          participants: "12,897 người thi",
-          comments: "636 bình luận",
-        },
-        {
-          title: "2024 Practice Set TOEIC Test 6",
-          questions: "120 phút",
-          participants: "10,200 người thi",
-          comments: "236 bình luận",
-        },
-        {
-          title: "2024 Practice Set TOEIC Test 7",
-          questions: "120 phút",
-          participants: "2,191 người thi",
-          comments: "636 bình luận",
-        },
-        {
-          title: "2024 Practice Set TOEIC Test 8",
-          questions: "120 phút",
-          participants: "2,309 người thi",
-          comments: "236 bình luận",
-        },
-        {
-          title: "2024 Practice Set TOEIC Test 9",
-          questions: "120 phút",
-          participants: "1,286 người thi",
-          comments: "636 bình luận",
-        },
-        {
-          title: "2024 Practice Set TOEIC Test 10",
-          questions: "120 phút",
-          participants: "3,936 người thi",
-          comments: "236 bình luận",
-        },
-        {
-          title: "2024 Practice Set TOEIC Test 11",
-          questions: "120 phút",
-          participants: "3,771 người thi",
-          comments: "636 bình luận",
-        },
-        {
-          title: "2024 Practice Set TOEIC Test 12",
-          questions: "120 phút",
-          participants: "10,812 người thi",
-          comments: "236 bình luận",
-        },
-        {
-          title: "2024 Practice Set TOEIC Test 13",
-          questions: "120 phút",
-          participants: "2,286 người thi",
-          comments: "636 bình luận",
-        },
-        {
-          title: "2024 Practice Set TOEIC Test 14",
-          questions: "120 phút",
-          participants: "4,590 người thi",
-          comments: "236 bình luận",
-        },
-        {
-          title: "2024 Practice Set TOEIC Test 15",
-          questions: "120 phút",
-          participants: "5,451 người thi",
-          comments: "636 bình luận",
-        },
-        {
-          title: "2024 Practice Set TOEIC Test 16",
-          questions: "120 phút",
-          participants: "104,482 người thi",
-          comments: "236 bình luận",
-        },
-        {
-          title: "2024 Practice Set TOEIC Test 17",
-          questions: "120 phút",
-          participants: "48 người thi",
-          comments: "15 bình luận",
-        },
-        {
-          title: "2024 Practice Set TOEIC Test 18",
-          questions: "120 phút",
-          participants: "15 người thi",
-          comments: "5 bình luận",
-        },
-        {
-          title: "2024 Practice Set TOEIC Test 19",
-          questions: "120 phút",
-          participants: "2,222 người thi",
-          comments: "10 bình luận",
-        },
-      ],
+      tests: [],
+      user: {
+        username: "",
+        avatar: null,
+        targetDate: null,
+        targetScore: null,
+        examType: null,
+      },
     };
   },
   computed: {
     filteredTests() {
       let filtered = this.tests;
 
-      // Lọc theo activeTab
       if (this.activeTab === "TOEIC") {
         filtered = filtered.filter((test) =>
           test.title.toLowerCase().includes("toeic")
         );
       }
 
-      // Lọc theo activeFilter (nếu activeTab không phải "Tất cả")
       if (this.activeTab !== "Tất cả") {
         filtered = filtered.filter((test) =>
-          test.title.includes(this.activeFilter)
+          String(test.yearId).includes(this.activeFilter)
         );
       }
 
-      // Lọc theo searchTerm (nếu có)
       if (this.searchTerm) {
         filtered = filtered.filter((test) =>
           test.title.toLowerCase().includes(this.searchTerm.toLowerCase())
@@ -317,24 +223,71 @@ export default {
       return filtered;
     },
     totalPages() {
-      // Tính tổng số trang dựa trên danh sách đã lọc
       return Math.ceil(this.filteredTests.length / this.testsPerPage);
     },
     displayedTests() {
-      // Phân trang dựa trên danh sách đã lọc
       const start = (this.currentPage - 1) * this.testsPerPage;
-      const end = start + this.testsPerPage;
-      return this.filteredTests.slice(start, end);
+      return this.filteredTests.slice(start, start + this.testsPerPage);
     },
   },
-
   methods: {
     performSearch() {
-      // Gán giá trị từ searchQuery sang searchTerm để kích hoạt lọc
       this.searchTerm = this.searchQuery;
-      // Đặt lại trang về 1 khi tìm kiếm để hiển thị kết quả từ đầu
       this.currentPage = 1;
     },
+
+    async loadAllTests() {
+      try {
+        const res = await examService.getAllTests();
+        this.tests = res.data.map((test) => ({
+          id: test.id,
+          title: test.title,
+          yearId: test.yearId,
+          timeLimit: test.timeLimit || 0,
+          totalQuestions: test.totalQuestions || 0,
+          description: test.description || "",
+          participants: `${(
+            test.participantsCount || 0
+          ).toLocaleString()} người thi`,
+          comments: `${(test.commentsCount || 0).toLocaleString()} bình luận`,
+        }));
+      } catch (error) {
+        console.error("Lỗi khi tải danh sách đề thi:", error);
+      }
+    },
+
+    async loadUserInfo() {
+      try {
+        const res = await userService.getCurrentUser();
+        const userId = res.data.id;
+
+        this.user.username = res.data.username;
+        this.user.avatar = res.data.avatarUrl || null;
+
+        const goalRes = await userService.getLearningGoals(userId);
+        if (goalRes.data.length > 0) {
+          const goal = goalRes.data[0];
+          this.user.targetDate = goal.targetDate;
+          this.user.targetScore = goal.targetScore;
+          this.user.examType = goal.examType || "TOEIC";
+        }
+      } catch (error) {
+        console.error("Lỗi khi tải thông tin người dùng:", error);
+      }
+    },
+
+    formatDate(dateStr) {
+      if (!dateStr) return "Chưa có";
+      return new Date(dateStr).toLocaleDateString("vi-VN");
+    },
+
+    goToTestDetail(testId) {
+      this.$router.push({ name: "Test", params: { id: testId } });
+    },
+  },
+  async mounted() {
+    await this.loadAllTests();
+    await this.loadUserInfo();
   },
 };
 </script>
@@ -350,6 +303,7 @@ export default {
 .search-input-container {
   position: relative;
   width: 100%;
+  margin-top: 10px;
 }
 
 /* Input search */
@@ -398,6 +352,7 @@ export default {
   color: white;
   border: none;
   padding: 10px 20px;
+  margin-top: 10px;
   border-radius: 6px;
   font-size: 14px;
   font-weight: bold;

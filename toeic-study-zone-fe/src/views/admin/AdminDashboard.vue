@@ -35,21 +35,25 @@
       <div class="chart-card">
         <h3>Tỷ lệ người dùng hoàn thành mục tiêu</h3>
         <p>
-          Tổng: {{ goalStats.totalGoals }} |
-          Đã hoàn thành: {{ goalStats.completedGoals }} |
-          Tỷ lệ: {{ goalStats.completionRate.toFixed(1) }}%
+          Tổng: {{ goalStats.totalGoals }} | Đã hoàn thành:
+          {{ goalStats.completedGoals }} | Tỷ lệ:
+          {{ goalStats.completionRate.toFixed(1) }}%
         </p>
-        <progress class="form-range w-100" :value="goalStats.completionRate" max="100"></progress>
+        <progress
+          class="form-range w-100"
+          :value="goalStats.completionRate"
+          max="100"
+        ></progress>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
-import logo from '@/assets/images/logo-study-zone.png';
-import BarChart from '@/views/admin/BarChart.vue';
-import statisticsService from '@/services/statisticsService';
+import { ref, onMounted, computed } from "vue";
+import logo from "@/assets/images/logo-study-zone.png";
+import BarChart from "@/views/admin/BarChart.vue";
+import statisticsService from "@/services/statisticsService";
 
 const summary = ref({});
 const topTests = ref([]);
@@ -60,23 +64,39 @@ const goalStats = ref({
 });
 
 const summaryItems = computed(() => [
-  { title: 'Người dùng', value: summary.value.totalUsers, icon: 'fas fa-user' },
-  { title: 'Bài thi', value: summary.value.totalTests, icon: 'fas fa-clipboard-list' },
-  { title: 'Đã nộp', value: summary.value.completedTests, icon: 'fas fa-chart-bar' },
-  { title: 'Điểm TB', value: summary.value.averageScore, icon: 'fas fa-check-circle' },
-  { title: 'Bình luận', value: summary.value.totalComments, icon: 'fas fa-comment' },
+  { title: "Người dùng", value: summary.value.totalUsers, icon: "fas fa-user" },
+  {
+    title: "Bài thi",
+    value: summary.value.totalTests,
+    icon: "fas fa-clipboard-list",
+  },
+  {
+    title: "Đã nộp",
+    value: summary.value.completedTests,
+    icon: "fas fa-chart-bar",
+  },
+  {
+    title: "Điểm TB",
+    value: summary.value.averageScore,
+    icon: "fas fa-check-circle",
+  },
+  {
+    title: "Bình luận",
+    value: summary.value.totalComments,
+    icon: "fas fa-comment",
+  },
 ]);
 
 const topTestChart = computed(() => {
-  const labels = topTests.value.map(t => t.testTitle);
-  const data = topTests.value.map(t => t.totalAttempts);
+  const labels = topTests.value.map((t) => t.testTitle);
+  const data = topTests.value.map((t) => t.totalAttempts);
   return {
     labels,
     datasets: [
       {
-        label: 'Số lượt làm',
+        label: "Số lượt làm",
         data,
-        backgroundColor: '#1877f2',
+        backgroundColor: "#1877f2",
       },
     ],
   };
@@ -93,7 +113,7 @@ onMounted(async () => {
     topTests.value = t.data;
     goalStats.value = g.data;
   } catch (err) {
-    console.error('Lỗi tải dashboard:', err);
+    console.error("Lỗi tải dashboard:", err);
   }
 });
 </script>

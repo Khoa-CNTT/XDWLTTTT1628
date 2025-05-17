@@ -6,6 +6,16 @@ public class CommentRequest {
     private Long parentId;
     private String commentText;
 
+    public CommentRequest() {
+    }
+
+    public CommentRequest(Long userId, Long testId, Long parentId, String commentText) {
+        this.userId = userId;
+        this.testId = testId;
+        this.parentId = parentId;
+        this.commentText = commentText;
+    }
+
     // Getters and Setters
     public Long getUserId() {
         return userId;

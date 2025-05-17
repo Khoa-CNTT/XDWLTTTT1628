@@ -12,7 +12,6 @@ import com.toeicstudyzone.repository.UserRepository;
 import com.toeicstudyzone.repository.UserRoleRepository;
 import com.toeicstudyzone.repository.UserTestHistoryRepository;
 import com.toeicstudyzone.service.AdminService;
-import com.toeicstudyzone.service.StatisticsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -36,9 +35,6 @@ public class AdminServiceImpl implements AdminService {
 
     @Autowired
     private UserRoleRepository userRoleRepository;
-
-    @Autowired
-    private StatisticsService statisticsService;
 
     @Override
     public List<UserResponse> getAllUsers() {

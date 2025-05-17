@@ -1,8 +1,8 @@
 // src/store/advertisement.js
-import { defineStore } from 'pinia';
-import advertisementService from '@/services/advertisementService';
+import { defineStore } from "pinia";
+import advertisementService from "@/services/advertisementService";
 
-export const useAdvertisementStore = defineStore('advertisement', {
+export const useAdvertisementStore = defineStore("advertisement", {
   state: () => ({
     advertisements: [],
     activeAdvertisements: [],

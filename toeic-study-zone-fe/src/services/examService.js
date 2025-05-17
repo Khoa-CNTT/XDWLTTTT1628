@@ -2,11 +2,14 @@
 import api from './api';
 
 const examService = {
-  getLatestTests(limit) {
-    return api.get(`/api/tests/latest?limit=${limit}`);
+  getLatestTests() {
+    return api.get('/api/tests/latest');
   },
   getTestById(testId) {
     return api.get(`/api/tests/${testId}`);
+  },
+  getAllTests() {
+    return api.get('/api/tests');
   },
 };
 

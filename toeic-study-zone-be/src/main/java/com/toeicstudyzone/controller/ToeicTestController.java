@@ -3,15 +3,19 @@ package com.toeicstudyzone.controller;
 import com.toeicstudyzone.dto.request.ToeicTestDTO;
 import com.toeicstudyzone.entity.TestYear;
 import com.toeicstudyzone.entity.ToeicTest;
+import com.toeicstudyzone.repository.CommentRepository;
 import com.toeicstudyzone.repository.TestYearRepository;
+import com.toeicstudyzone.repository.UserTestHistoryRepository;
 import com.toeicstudyzone.service.ToeicTestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.toeicstudyzone.dto.response.LatestTestResponse;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/tests")
@@ -22,6 +26,12 @@ public class ToeicTestController {
 
     @Autowired
     private TestYearRepository testYearRepository;
+
+    @Autowired
+    private CommentRepository commentRepository;
+
+    @Autowired
+    private UserTestHistoryRepository userTestHistoryRepository;
 
     @GetMapping
     public ResponseEntity<List<ToeicTestDTO>> getAllTests() {
@@ -53,6 +63,11 @@ public class ToeicTestController {
         return ResponseEntity.ok("Test deleted successfully");
     }
 
+    @GetMapping("/latest")
+    public ResponseEntity<List<LatestTestResponse>> getLatestTests() {
+        return ResponseEntity.ok(toeicTestService.getLatestPublishedTests());
+    }
+
     private ToeicTest convertToEntity(ToeicTestDTO dto) {
         if (dto == null || dto.getYearId() == null || dto.getYearId() < 2010) {
             throw new IllegalArgumentException("Invalid year (must be >= 2010)");
@@ -81,6 +96,9 @@ public class ToeicTestController {
     }
 
     private ToeicTestDTO convertToDTO(ToeicTest test) {
+        Long commentCount = commentRepository.countByTestId(test.getId());
+        Long participantCount = userTestHistoryRepository.countByTestId(test.getId());
+
         return new ToeicTestDTO(
                 test.getId(),
                 test.getTitle(),
@@ -92,7 +110,9 @@ public class ToeicTestController {
                 test.getIsPublished(),
                 test.getIsPlacementTest(),
                 test.getCreatedAt(),
-                test.getUpdatedAt()
-        );
+                test.getUpdatedAt(),
+                participantCount,
+                commentCount);
     }
+
 }

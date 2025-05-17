@@ -8,32 +8,43 @@
           <h1 class="greeting">Xin chào, {{ username }}!</h1>
           <div v-if="!hasGoal" class="notification-text">
             ⏰ Bạn chưa tạo mục tiêu cho quá trình luyện thi của mình.
-            <a href="#" class="action-link" @click.prevent="openStudyGoalsModal">Tạo ngay</a>
+            <a href="#" class="action-link" @click.prevent="openStudyGoalsModal"
+              >Tạo ngay</a
+            >
           </div>
           <div v-else class="study-goal-box">
             <h3>Mục tiêu luyện thi hiện tại của bạn 🎯</h3>
             <ul>
               <li><strong>Môn thi:</strong> TOEIC</li>
-              <li><strong>Ngày dự thi:</strong> {{ formatDate(userGoal.targetDate) }}</li>
-              <li><strong>Mục tiêu điểm số:</strong> {{ userGoal.targetScore }}</li>
+              <li>
+                <strong>Ngày dự thi:</strong>
+                {{ formatDate(userGoal.targetDate) }}
+              </li>
+              <li>
+                <strong>Mục tiêu điểm số:</strong> {{ userGoal.targetScore }}
+              </li>
             </ul>
-            <a href="#" @click.prevent="openStudyGoalsModal">📝 Cập nhật mục tiêu</a>
+            <a href="#" @click.prevent="openStudyGoalsModal"
+              >📝 Cập nhật mục tiêu</a
+            >
           </div>
         </div>
 
-        <!-- Schedule Section -->
+        <!-- Lịch học -->
         <div class="schedule-section">
           <h2 class="section-title">Lịch học hôm nay</h2>
           <p class="empty-text">
             <em>
               Bạn không có lịch học hôm nay. Vui lòng vào
-              <router-link to="/schedule-form" class="action-link">Lịch học của tôi</router-link>
+              <router-link to="/schedule-form" class="action-link"
+                >Lịch học của tôi</router-link
+              >
               để xem thêm hoặc tạo mới.
             </em>
           </p>
         </div>
 
-        <!-- Recent Results Section -->
+        <!-- Kết quả gần đây -->
         <div class="recent-results-section">
           <h2 class="section-title">Kết quả luyện thi mới nhất</h2>
 
@@ -88,7 +99,7 @@
       </section>
     </div>
 
-    <!-- Banner section -->
+    <!-- Banner  -->
     <div class="banner-section">
       <div class="level-test-banner">
         <div class="banner-content">
@@ -99,7 +110,7 @@
       </div>
     </div>
 
-    <!-- Featured courses section -->
+    <!-- Khoá học -->
     <div class="featured-courses-section">
       <h3 class="section-title">Khoá học online nổi bật</h3>
       <div class="row">
@@ -143,53 +154,41 @@
       </div>
     </div>
 
-    <!-- New tests section -->
+    <!-- Các bài thi mới -->
     <div class="new-tests-section">
       <h3 class="section-title">Đề thi mới nhất</h3>
       <p class="section-subtitle">
-        Nhận chứng chỉ chính thức - Chứng nhận - Hiệu quả
+        Nhận chứng chỉ chính thức - Đúng chuẩn TOEIC
       </p>
 
-      <!-- Dòng 1 - 4 cards đầu tiên -->
       <div class="row">
         <div
           class="col-md-3"
-          v-for="(test, index) in newTests.slice(0, 4)"
-          :key="'test1-' + index"
+          v-for="(test, index) in newTests.slice(0, 8)"
+          :key="'test-' + index"
         >
           <div class="test-card">
             <h4 class="test-title">{{ test.title }}</h4>
             <p class="test-time">
-              <span class="icon">⏰</span> {{ test.time }} |
-              <span class="icon">📝</span> {{ test.participants }} |
-              <span class="icon">💬</span> {{ test.comments }}
+              <span class="icon">⏰</span> {{ test.timeLimit }} phút |
+              <span class="icon">📝</span> {{ test.participants }} người thi |
+              <span class="icon">💬</span> {{ test.comments }} bình luận
             </p>
-            <p class="test-description">{{ test.description }}</p>
-            <button class="btn btn-outline-primary">Chi tiết</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Dòng 2 - 4 cards tiếp theo -->
-      <div class="row">
-        <div
-          class="col-md-3"
-          v-for="(test, index) in newTests.slice(4, 8)":key="'test2-' + index">
-          <div class="test-card">
-            <h4 class="test-title">{{ test.title }}</h4>
-            <p class="test-time">
-              <span class="icon">⏰</span> {{ test.time }} |
-              <span class="icon">📝</span> {{ test.participants }} |
-              <span class="icon">💬</span> {{ test.comments }}
+            <p class="test-description">
+              {{ test.totalQuestions }} câu hỏi | {{ test.description }}
             </p>
-            <p class="test-description">{{ test.description }}</p>
-            <button class="btn btn-outline-primary">Chi tiết</button>
+            <button
+              class="btn btn-outline-primary"
+              @click="goToTestDetail(test.id)"
+            >
+              Chi tiết
+            </button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Promo banner -->
+    <!-- Banner -->
     <div class="promo-banner">
       <div class="promo-content">
         <h3 class="promo-title">LUYỆN ĐỀ ONLINE KHÔNG GIỚI HẠN</h3>
@@ -213,7 +212,7 @@
       <span class="dot"></span>
     </div>
 
-    <!-- Modal StudyGoals -->
+    <!-- Modal mục tiêu học tập -->
     <study-goals
       :show-modal="showStudyGoalsModal"
       :current-goal="userGoal"
@@ -229,6 +228,7 @@ import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/store/useAuthStore";
 import userService from "@/services/userService";
+import examService from "@/services/examService";
 import Advertisement from "@/layouts/Advertisement.vue";
 import StudyGoals from "@/views/user/StudyGoals.vue";
 import "@/assets/css/Dashboard.css";
@@ -239,6 +239,7 @@ const showStudyGoalsModal = ref(false);
 const hasGoal = ref(false);
 const showAdModal = ref(true);
 const userGoal = ref(null);
+const newTests = ref([]);
 
 const username = computed(() => authStore.username || "bạn");
 
@@ -278,10 +279,33 @@ const loadUserGoal = async () => {
   }
 };
 
+//  Tải đề thi mới từ backend
+const loadNewTests = async () => {
+  try {
+    const res = await examService.getLatestTests();
+    newTests.value = res.data.map((test) => ({
+      id: test.id,
+      title: test.title,
+      description: test.description,
+      timeLimit: test.timeLimit,
+      totalQuestions: test.totalQuestions,
+      participants: (test.participantsCount ?? 0).toLocaleString(),
+      comments: (test.commentsCount ?? 0).toLocaleString(),
+    }));
+  } catch (error) {
+    console.error("Lỗi khi tải đề thi mới:", error);
+  }
+};
+
+const goToTestDetail = (testId) => {
+  router.push({ name: "Test", params: { id: testId } });
+};
+
 onMounted(() => {
   if (authStore.isAuthenticated) {
     loadUserGoal();
   }
+  loadNewTests();
 });
 
 const handleDeleteGoal = async () => {
@@ -289,65 +313,6 @@ const handleDeleteGoal = async () => {
   hasGoal.value = false;
   showStudyGoalsModal.value = false;
 };
-
-const newTests = [
-  {
-    title: "TOEIC Practice Set test 1",
-    time: "120 phút",
-    participants: "98,281 người thi",
-    comments: "636 bình luận",
-    description: "2 phần thi | 200 câu hỏi",
-  },
-  {
-    title: "TOEIC Practice Set test 2",
-    time: "120 phút",
-    participants: "28,281 người thi",
-    comments: "236 bình luận",
-    description: "2 phần thi | 200 câu hỏi",
-  },
-  {
-    title: "TOEIC Practice Set test 3",
-    time: "120 phút",
-    participants: "9,281 người thi",
-    comments: "636 bình luận",
-    description: "2 phần thi | 200 câu hỏi",
-  },
-  {
-    title: "TOEIC Practice Set test 4",
-    time: "120 phút",
-    participants: "9,281 người thi",
-    comments: "236 bình luận",
-    description: "2 phần thi | 200 câu hỏi",
-  },
-  {
-    title: "TOEIC Practice Set test 5",
-    time: "120 phút",
-    participants: "928,281 người thi",
-    comments: "636 bình luận",
-    description: "2 phần thi | 200 câu hỏi",
-  },
-  {
-    title: "TOEIC Practice Set test 6",
-    time: "120 phút",
-    participants: "28,281 người thi",
-    comments: "236 bình luận",
-    description: "2 phần thi | 200 câu hỏi",
-  },
-  {
-    title: "TOEIC Practice Set test 7",
-    time: "120 phút",
-    participants: "9,281 người thi",
-    comments: "636 bình luận",
-    description: "2 phần thi | 200 câu hỏi",
-  },
-  {
-    title: "TOEIC Practice Set test 8",
-    time: "120 phút",
-    participants: "9,281 người thi",
-    comments: "236 bình luận",
-    description: "2 phần thi | 200 câu hỏi",
-  },
-];
 
 const featuredCourses = [
   {
@@ -755,7 +720,7 @@ const featuredCourses = [
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   padding: 1.8rem 1.5rem;
   text-align: left;
-  margin-bottom: 1.5rem;
+  margin-bottom: 3rem;
   transition: all 0.3s ease;
 
   &:hover {

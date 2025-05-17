@@ -84,17 +84,18 @@ public class CommentController {
 
             Comment savedComment = commentService.createComment(comment);
             return ResponseEntity.ok(new CommentDTO(
-                savedComment.getId(),
-                savedComment.getUser().getId(),
-                savedComment.getTest().getId(),
-                savedComment.getTest().getTitle(),
-                savedComment.getTest().getTestYear().getYear(),
-                savedComment.getParent() != null ? savedComment.getParent().getId() : null,
-                savedComment.getCommentText(),
-                savedComment.getCreatedAt(),
-                savedComment.getUpdatedAt(),
-                savedComment.getStatus().name()
-            ));
+                    savedComment.getId(),
+                    savedComment.getUser().getId(),
+                    comment.getUser() != null ? comment.getUser().getUsername() : null,
+                    savedComment.getTest().getId(),
+                    savedComment.getTest().getTitle(),
+                    savedComment.getTest().getTestYear().getYear(),
+                    savedComment.getParent() != null ? savedComment.getParent().getId() : null,
+                    savedComment.getCommentText(),
+                    savedComment.getCreatedAt(),
+                    savedComment.getUpdatedAt(),
+                    savedComment.getStatus().name(),
+                    savedComment.getUser().getAvatarUrl()));
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
             error.put("message", "Error saving comment: " + e.getMessage());
@@ -124,6 +125,12 @@ public class CommentController {
         return ResponseEntity.ok(replies);
     }
 
+    @GetMapping("/all")
+    public ResponseEntity<List<CommentDTO>> getAllComments(@RequestParam(required = false) String keyword) {
+        List<CommentDTO> comments = commentService.getAllComments(keyword);
+        return ResponseEntity.ok(comments);
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<?> updateComment(@PathVariable Long id, @RequestBody Map<String, Object> requestBody) {
         try {
@@ -141,17 +148,18 @@ public class CommentController {
             }
             Comment comment = updatedComment.get();
             return ResponseEntity.ok(new CommentDTO(
-                comment.getId(),
-                comment.getUser().getId(),
-                comment.getTest().getId(),
-                comment.getTest().getTitle(),
-                comment.getTest().getTestYear().getYear(),
-                comment.getParent() != null ? comment.getParent().getId() : null,
-                comment.getCommentText(),
-                comment.getCreatedAt(),
-                comment.getUpdatedAt(),
-                comment.getStatus().name()
-            ));
+                    comment.getId(),
+                    comment.getUser().getId(),
+                    comment.getUser() != null ? comment.getUser().getUsername() : null,
+                    comment.getTest().getId(),
+                    comment.getTest().getTitle(),
+                    comment.getTest().getTestYear().getYear(),
+                    comment.getParent() != null ? comment.getParent().getId() : null,
+                    comment.getCommentText(),
+                    comment.getCreatedAt(),
+                    comment.getUpdatedAt(),
+                    comment.getStatus().name(),
+                    comment.getUser().getAvatarUrl()));
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
             error.put("message", "Error updating comment: " + e.getMessage());

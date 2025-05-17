@@ -7,7 +7,7 @@ import com.toeicstudyzone.entity.UserRole;
 import com.toeicstudyzone.repository.RolePermissionRepository;
 import com.toeicstudyzone.repository.UserRepository;
 import com.toeicstudyzone.repository.UserRoleRepository;
-import com.toeicstudyzone.service.PermissionService;
+// import com.toeicstudyzone.service.PermissionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
@@ -24,8 +24,8 @@ public class PermissionEvaluator implements org.springframework.security.access.
     @Autowired
     private RolePermissionRepository rolePermissionRepository;
 
-    @Autowired
-    private PermissionService permissionService;
+    // @Autowired
+    // private PermissionService permissionService;
 
     @Autowired
     private UserRepository userRepository;

@@ -17,11 +17,12 @@
         v-model="searchKeyword"
         placeholder="Tìm kiếm theo bình luận hoặc tên người dùng"
       />
-      <button class="btn btn-primary search-btn" @click="fetchUsers">
+      <button class="btn btn-primary search-btn" @click="fetchComments">
         Tìm kiếm
       </button>
     </div>
 
+    <!-- Bảng danh sách bình luận -->
     <div class="table-responsive">
       <table class="table table-bordered align-middle shadow-sm">
         <thead class="table-light">
@@ -44,7 +45,7 @@
                 class="btn btn-sm btn-info"
                 data-bs-toggle="modal"
                 data-bs-target="#commentDetailModal"
-                @click="showCommentDetail(comment.text)"
+                @click="showCommentDetail(comment.commentText)"
               >
                 Chi tiết
               </button>
@@ -55,20 +56,20 @@
                 class="btn btn-sm btn-danger"
                 @click="deleteComment(comment.id)"
               >
-                <i class="fas fa-trash" style="margin-right: 0.2rem"></i> Xóa
+                <i class="fas fa-trash me-1"></i> Xóa
               </button>
             </td>
           </tr>
           <tr v-if="comments.length === 0">
             <td colspan="6" class="text-center text-muted fst-italic">
-              Chưa có bình luận nào.
+              Không có bình luận nào.
             </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- Modal hiển thị nội dung bình luận -->
+    <!-- Modal chi tiết nội dung bình luận -->
     <div
       class="modal fade"
       id="commentDetailModal"
@@ -108,36 +109,15 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
+import userService from "@/services/userService";
 
+const comments = ref([]);
 const searchKeyword = ref("");
 const successMessage = ref("");
 const selectedCommentText = ref("");
 
-const comments = ref([
-  {
-    id: 1,
-    userName: "Lê Thị Ánh Ngọc",
-    testTitle: "New Economy TOEIC Test 1",
-    text: "Bài rất hay",
-    createdAt: "2025-04-22T10:00:00Z",
-  },
-]);
-
-function deleteComment(id) {
-  if (confirm("Bạn có chắc chắn muốn xóa bình luận này không?")) {
-    comments.value = comments.value.filter((c) => c.id !== id);
-    successMessage.value = "Bình luận đã bị xóa!";
-    setTimeout(() => {
-      successMessage.value = "";
-    }, 3000);
-  }
-}
-
-function showCommentDetail(text) {
-  selectedCommentText.value = text;
-}
-
+// Format thời gian hiển thị
 function formatDateTime(isoString) {
   const date = new Date(isoString);
   const day = String(date.getDate()).padStart(2, "0");
@@ -148,12 +128,41 @@ function formatDateTime(isoString) {
   return `${hours}:${minutes} ${day}/${month}/${year}`;
 }
 
-function fetchUsers() {
-  successMessage.value = "Tìm kiếm chưa được cài đặt.";
-  setTimeout(() => {
-    successMessage.value = "";
-  }, 3000);
+// Hiển thị nội dung chi tiết comment
+function showCommentDetail(text) {
+  selectedCommentText.value = text;
 }
+
+// Xóa bình luận
+async function deleteComment(id) {
+  const confirmDelete = confirm("Bạn có chắc chắn muốn xóa bình luận này?");
+  if (!confirmDelete) return;
+
+  try {
+    await userService.deleteComment(id);
+    comments.value = comments.value.filter((c) => c.id !== id);
+    successMessage.value = " Bình luận đã bị xóa!";
+    setTimeout(() => (successMessage.value = ""), 3000);
+  } catch (error) {
+    console.error("Lỗi khi xóa bình luận:", error);
+    alert(" Xóa thất bại. Vui lòng thử lại.");
+  }
+}
+
+// Tìm kiếm / load bình luận
+async function fetchComments() {
+  try {
+    const res = await userService.getAllComments(searchKeyword.value || "");
+    comments.value = res.data;
+  } catch (error) {
+    console.error("Lỗi khi tải danh sách bình luận:", error);
+    comments.value = [];
+  }
+}
+
+onMounted(() => {
+  fetchComments();
+});
 </script>
 
 <style scoped>

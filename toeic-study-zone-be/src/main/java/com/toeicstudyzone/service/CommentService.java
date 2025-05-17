@@ -7,9 +7,16 @@ import java.util.Optional;
 
 public interface CommentService {
     Comment createComment(Comment comment);
-    List<CommentDTO> getCommentsByTestId(Long testId); 
-    List<CommentDTO> getRepliesByParentId(Long parentId); 
+
+    List<CommentDTO> getCommentsByTestId(Long testId);
+
+    List<CommentDTO> getRepliesByParentId(Long parentId);
+
     Optional<Comment> updateComment(Long id, String commentText);
+
     void deleteComment(Long id);
+
     Optional<Comment> findById(Long id);
+
+    List<CommentDTO> getAllComments(String keyword);
 }

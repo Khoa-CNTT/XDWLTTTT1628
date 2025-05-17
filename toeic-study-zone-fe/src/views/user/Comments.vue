@@ -20,15 +20,23 @@
       >
         <div class="d-flex">
           <div class="avatar-wrapper me-2">
-            <div class="avatar">{{ comment.initial }}</div>
+            <img
+              v-if="comment.avatarUrl"
+              :src="comment.avatarUrl"
+              alt="avatar"
+              class="avatar-img"
+            />
+            <div v-else class="avatar">
+              {{ comment.userName?.charAt(0).toUpperCase() }}
+            </div>
           </div>
+
           <div class="comment-content">
             <div class="comment-header">
-              <span class="username">{{ comment.author }}</span>
-              <span class="date">· {{ comment.date }}</span>
+              <span class="username">{{ comment.userName }}</span>
+              <span class="date">· {{ formatDate(comment.createdAt) }}</span>
             </div>
-            <div class="comment-text">{{ comment.content }}</div>
-            <a href="#" class="reply-link">Trả lời</a>
+            <div class="comment-text">{{ comment.commentText }}</div>
           </div>
         </div>
       </div>
@@ -36,119 +44,60 @@
   </div>
 </template>
 
-<script>
-import { ref } from "vue";
+<script setup>
+import { ref, onMounted, toRefs } from "vue";
+import commentService from "@/services/commentService";
 
-export default {
-  name: "Comments",
-  setup() {
-    const newComment = ref("");
-    const comments = ref([
-      {
-        author: "22002845",
-        date: "Tháng tư 05, 2023",
-        content:
-          "Cho mình hỏi lần đầu thi thì nên luyện trên đề ETS hay này rất khó",
-        initial: "2",
-      },
-      {
-        author: "has9294",
-        date: "Tháng tư 02, 2023",
-        content: "old format khó hơn phải không?",
-        initial: "H",
-      },
-      {
-        author: "study4",
-        date: "Tháng tư 02, 2023",
-        content: "old format là các bạc học thi có thời",
-        initial: "S",
-      },
-      {
-        author: "47vs.snow",
-        date: "Tháng 8, 21, 2024",
-        content: "Đây là đề cũ 2024 pk a",
-        initial: "4",
-      },
-      {
-        author: "PhuctheHero8c391074ef1ca_38t323",
-        date: "Tháng 8, 15, 2024",
-        content: "e vừa thử không vào máy bộ để 20/1? sau hết rồi",
-        initial: "P",
-      },
-      {
-        author: "vietnaodi123",
-        date: "Tháng 8, 04, 2024",
-        content: "cày từ sáng tới tối phết",
-        initial: "V",
-      },
-      {
-        author: "vietnaodi123",
-        date: "Tháng 8, 04, 2024",
-        content: "lại là t-chu minh nhân",
-        initial: "V",
-      },
-      {
-        author: "ThanhDiemn_15625",
-        date: "Tháng 8, 04, 2024",
-        content: "format mới có giống như đề thi toeic ko a",
-        initial: "T",
-      },
-      {
-        author: "lehieu24nguyen",
-        date: "Tháng 8, 02, 2024",
-        content: "format cũ khó hơn đề mới?",
-        initial: "L",
-      },
-      {
-        author: "hau9024",
-        date: "Tháng 8, 02, 2024",
-        content:
-          "Mô hình thây của mình ngày phải du vưỡng khó hơn format mới nhiều.",
-        initial: "H",
-      },
-      {
-        author: "tarhoa.tran.5",
-        date: "Tháng 10, 19, 2023",
-        content: "có 2 người phụ nữ trông rất giống “the hat” nhỉ?",
-        initial: "T",
-      },
-      {
-        author: "nqaha.duck",
-        date: "Tháng 10, 19, 2023",
-        content: "hay là chị người phụ nữ thay nhật mức gì đó nhỉ",
-        initial: "N",
-      },
-      {
-        author: "phamthitu0219960",
-        date: "Tháng bảy 25, 2024",
-        content: "4 là cái 9 mà",
-        initial: "P",
-      },
-    ]);
+const props = defineProps({
+  testId: Number,
+  user: Object,
+});
 
-    const submitComment = () => {
-      if (newComment.value.trim()) {
-        comments.value.unshift({
-          author: "Current User",
-          date: new Date().toLocaleDateString("vi-VN", {
-            month: "long",
-            day: "numeric",
-            year: "numeric",
-          }),
-          content: newComment.value,
-          initial: "C",
-        });
-        newComment.value = "";
-      }
-    };
+const { testId, user } = toRefs(props);
 
-    return {
-      newComment,
-      comments,
-      submitComment,
-    };
-  },
+const newComment = ref("");
+const comments = ref([]);
+
+const loadComments = async () => {
+  try {
+    const res = await commentService.getCommentsByTestId(testId.value);
+    comments.value = res.data;
+  } catch (err) {
+    console.error("Lỗi khi tải bình luận:", err);
+  }
 };
+
+const submitComment = async () => {
+  if (!newComment.value.trim()) return;
+
+  try {
+    const res = await commentService.postComment({
+      userId: user.value.id,
+      testId: testId.value,
+      commentText: newComment.value,
+      parentId: null,
+    });
+
+    comments.value.unshift(res.data);
+    await loadComments();
+    newComment.value = "";
+  } catch (err) {
+    console.error("Lỗi khi gửi bình luận:", err);
+    alert("Gửi bình luận thất bại!");
+  }
+};
+
+const formatDate = (iso) => {
+  return new Date(iso).toLocaleDateString("vi-VN", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+};
+
+onMounted(() => {
+  loadComments();
+});
 </script>
 
 <style scoped>
@@ -177,8 +126,8 @@ export default {
 }
 
 .avatar {
-  width: 26px;
-  height: 26px;
+  width: 35px;
+  height: 35px;
   background-color: #e9e9e9;
   color: #555;
   border-radius: 50%;
@@ -228,4 +177,12 @@ export default {
 .reply-link:hover {
   text-decoration: underline;
 }
+
+.avatar-img {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
 </style>
